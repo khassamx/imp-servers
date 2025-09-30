@@ -4,13 +4,12 @@
   "description": "IMP SERVERS - Login con chat, rangos y panel de control",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "initdb": "node init_db.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "express": "^4.21.1",
     "socket.io": "^4.7.5",
-    "sqlite3": "^5.1.7"
+    "bcryptjs": "^2.4.3",
+    "node-fetch": "^3.3.2"
   }
 }
