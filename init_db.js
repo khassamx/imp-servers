@@ -35,15 +35,15 @@ async function run() {
     // Pre-popular usuarios (si no existen)
     const defaults = [
       { user: 'Keko.imp', pass: 'Gta2045', role: 'LIDER' },
-      { user: 'Aye_Russu', pass: 'hiro2025', role: 'COLIDER' },
+      { user: 'Aye_Russu', pass: 'hiro2025', role: 'MIEMBRO' },
       { user: 'Atlas', pass: '293749292', role: 'VETERANO' },
-      { user: 'Naim', pass: 'tilin123', role: 'MIEMBRO' },
+      { user: 'Naim', pass: 'tilin123', role: 'COLIDER' },
       { user: 'Oliver-imp', pass: '12831283', role: 'LIDER' },
       { user: 'Zoe', pass: 'psico2025', role: 'VETERANO' },
       { user: 'Mili', pass: 'miliCasa', role: 'MIEMBRO' },
       { user: 'Ayelen', pass: 'ayel2025', role: 'COLIDER' },
       { user: 'Ruben', pass: 'ruben321', role: 'MIEMBRO' },
-      { user: 'Ainhoa', pass: 'ainhoPass', role: 'VETERANO' }
+      { user: 'CEO', pass: 'aiss', role: 'VETERANO' }
     ];
 
     for (const u of defaults) {
