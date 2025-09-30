@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>IMP SERVERS</title>
+</head>
+<body>
+<h1>¡Servidor funcionando!</h1>
+<p>Si ves esto, tu `/` funciona correctamente.</p>
+</body>
+</html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
