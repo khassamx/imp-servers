@@ -5,12 +5,17 @@ const io = require("socket.io")(http);
 const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const fetch = require("node-fetch");
+const os = require("os");
 
-app.use(express.static("public"));
-app.use(express.json());
+const PORT = 3000;
 
+// Archivos de datos
 const USERS_FILE = "./data/users.json";
 const MESSAGES_FILE = "./data/messages.json";
+
+// Middleware
+app.use(express.static("public"));
+app.use(express.json());
 
 // ===== LOGIN =====
 app.post("/login", (req, res) => {
@@ -30,7 +35,12 @@ io.on("connection", socket => {
     console.log("Nuevo usuario conectado");
 
     // Enviar historial de mensajes
-    const messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+    let messages = [];
+    try {
+        messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+    } catch (err) {
+        console.log("No hay historial de mensajes, creando uno nuevo...");
+    }
     socket.emit("chat-history", messages);
 
     // Recibir mensaje
@@ -51,6 +61,19 @@ io.on("connection", socket => {
     });
 });
 
+// ===== DETECTAR IP AUTOMÁTICA =====
+function getLocalIP() {
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            if (net.family === "IPv4" && !net.internal) {
+                return net.address;
+            }
+        }
+    }
+    return "localhost";
+}
+
 // ===== TRADUCCIÓN AUTOMÁTICA =====
 async function translateToSpanish(text) {
     try {
@@ -67,5 +90,7 @@ async function translateToSpanish(text) {
 }
 
 // ===== INICIAR SERVIDOR =====
-const PORT = 3000;
-http.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+http.listen(PORT, "0.0.0.0", () => {
+    const ip = getLocalIP();
+    console.log(`Servidor corriendo en http://${ip}:${PORT}`);
+});
