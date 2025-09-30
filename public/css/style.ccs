@@ -1,0 +1,36 @@
+/* public/css/style.css */
+:root {
+  --bg: #000000;
+  --neon: #00ff88;
+  --red: #ff1f3a;
+  --muted: #9aa0a6;
+  --panel: #060606;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);font-family:Consolas,monospace,monospace;color:var(--neon)}
+.wrap{max-width:980px;margin:30px auto;padding:18px}
+.login-card, .chat-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,0,0,0.06); padding:18px; border-radius:10px; box-shadow: 0 6px 30px rgba(0,0,0,0.7);}
+.title{font-size:28px;margin:0 0 12px;color:var(--red);letter-spacing:2px;text-shadow:0 0 12px rgba(255,0,0,0.12)}
+.terminal{background:#020202;color:var(--neon);padding:10px;border-radius:6px;border:1px solid rgba(0,255,136,0.06);height:70px;overflow:hidden;margin-bottom:12px}
+.terminal .line{font-size:13px;margin:4px 0;opacity:0.95}
+label{font-size:11px;color:var(--muted);display:block;margin-top:8px}
+input[type=text], input[type=password], select{width:100%;padding:10px;margin-top:6px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--neon);border-radius:6px}
+.actions{display:flex;justify-content:flex-end;margin-top:12px}
+.btn{background:linear-gradient(90deg,#00ff88,#00b37a);border:0;padding:8px 12px;border-radius:6px;color:#001;cursor:pointer;font-weight:700;box-shadow:0 6px 12px rgba(0,0,0,0.8)}
+.btn.small{padding:6px 8px;font-size:13px}
+.hidden{display:none}
+.error{color:var(--red);margin-top:8px}
+.chatBox{background:#050505;border-radius:8px;padding:12px;height:380px;overflow:auto;border:1px solid rgba(255,255,255,0.03);margin-bottom:12px}
+.message{margin-bottom:10px;font-size:14px}
+.message .meta{font-size:12px;opacity:0.8;margin-bottom:4px}
+.sendRow{display:flex;gap:8px}
+.sendRow input{flex:1}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.welcome{font-weight:700;color:var(--neon)}
+.small{color:var(--muted);font-size:12px}
+.adminPanel{margin-top:12px;padding:12px;background:#0a0a0a;border-radius:8px;border:1px solid rgba(255,0,0,0.04)}
+.adminControls{display:flex;flex-direction:column;gap:8px}
+.flexRow{display:flex;gap:8px}
+.btn.warn{background:linear-gradient(90deg,#ff6b6b,#ff3b3b);color:#200}
+.btn.primary{background:linear-gradient(90deg,#5dd1ff,#2fb4ff);color:#012}
