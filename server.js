@@ -1,160 +1,71 @@
-// server.js
-const express = require('express');
-const http = require('http');
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
-const bodyParser = require('body-parser');
-const { Server } = require('socket.io');
-const helmet = require('helmet');
-
+const express = require("express");
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
+const fs = require("fs");
+const bcrypt = require("bcryptjs");
+const fetch = require("node-fetch");
 
-const DB_PATH = path.join(__dirname, 'data', 'imp.db');
-const db = new sqlite3.Database(DB_PATH);
+app.use(express.static("public"));
+app.use(express.json());
 
-app.use(helmet());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const USERS_FILE = "./data/users.json";
+const MESSAGES_FILE = "./data/messages.json";
 
-app.use(session({
-  store: new SQLiteStore({ db: 'sessions.sqlite', dir: './data' }),
-  secret: 'CAMBIA_ESTO_POR_UNA_CLAVE_MUY_FUERTE',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 24*60*60*1000 } // 1 dia
-}));
+// ===== LOGIN =====
+app.post("/login", (req, res) => {
+    const { username, password } = req.body;
+    const users = JSON.parse(fs.readFileSync(USERS_FILE));
+    const user = users.find(u => u.username === username);
 
-// --- AUTH helpers ---
-function isAuthenticated(req) {
-  return req.session && req.session.user;
-}
+    if (user && bcrypt.compareSync(password, user.password)) {
+        res.json({ success: true, role: user.role, username: user.username });
+    } else {
+        res.json({ success: false });
+    }
+});
 
-function requireAuth(req, res, next) {
-  if (!isAuthenticated(req)) return res.status(401).json({ error: 'No autenticado' });
-  next();
-}
+// ===== SOCKET.IO CHAT =====
+io.on("connection", socket => {
+    console.log("Nuevo usuario conectado");
 
-function requireLeader(req, res, next) {
-  if (!isAuthenticated(req) || req.session.user.role !== 'LIDER') return res.status(403).json({ error: 'Acceso denegado: solo LIDER' });
-  next();
-}
+    // Enviar historial de mensajes
+    const messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
+    socket.emit("chat-history", messages);
 
-// --- Routes ---
-// login
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Faltan credenciales' });
+    // Recibir mensaje
+    socket.on("chat-message", async data => {
+        const translatedText = await translateToSpanish(data.message);
+        const message = {
+            username: data.username,
+            role: data.role,
+            message: translatedText,
+            date: new Date()
+        };
 
-  db.get(`SELECT id, username, password, role FROM users WHERE username = ?`, [username], (err, row) => {
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    if (!row) return res.status(401).json({ error: 'Credenciales inválidas' });
-    bcrypt.compare(password, row.password, (err2, ok) => {
-      if (ok) {
-        req.session.user = { id: row.id, username: row.username, role: row.role };
-        return res.json({ ok: true, user: req.session.user });
-      } else return res.status(401).json({ error: 'Credenciales inválidas' });
+        messages.push(message);
+        fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2));
+
+        io.emit("chat-message", message);
+        console.log(`[${message.role}] ${message.username}: ${message.message}`);
     });
-  });
 });
 
-// logout
-app.post('/api/logout', (req, res) => {
-  req.session.destroy(()=>res.json({ ok: true }));
-});
+// ===== TRADUCCIÓN AUTOMÁTICA =====
+async function translateToSpanish(text) {
+    try {
+        const res = await fetch("https://libretranslate.de/translate", {
+            method: "POST",
+            body: JSON.stringify({ q: text, source: "auto", target: "es" }),
+            headers: { "Content-Type": "application/json" }
+        });
+        const data = await res.json();
+        return data.translatedText || text;
+    } catch (err) {
+        return text; // Si falla, devolver el texto original
+    }
+}
 
-// obtener historial (autenticado)
-app.get('/api/messages', requireAuth, (req, res) => {
-  db.all(`SELECT id, username, role, text, ts FROM messages ORDER BY id ASC LIMIT 1000`, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    res.json(rows);
-  });
-});
-
-// --- Admin (solo LIDER) ---
-// listar usuarios (solo para leader)
-app.get('/api/admin/users', requireLeader, (req, res) => {
-  db.all(`SELECT id, username, role, created_at FROM users ORDER BY id`, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    res.json(rows);
-  });
-});
-
-// crear usuario
-app.post('/api/admin/users', requireLeader, async (req, res) => {
-  const { username, password, role } = req.body;
-  if (!username || !password || !role) return res.status(400).json({ error: 'Datos incompletos' });
-  const hash = await bcrypt.hash(password, 10);
-  db.run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, [username, hash, role], function(err){
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    res.json({ ok: true, id: this.lastID });
-  });
-});
-
-// actualizar usuario (password/role)
-app.put('/api/admin/users/:id', requireLeader, async (req, res) => {
-  const id = req.params.id;
-  const { password, role } = req.body;
-  if (!password && !role) return res.status(400).json({ error: 'Nada para actualizar' });
-  const updates = [];
-  const params = [];
-  if (password) {
-    const hash = await bcrypt.hash(password, 10);
-    updates.push('password = ?'); params.push(hash);
-  }
-  if (role) { updates.push('role = ?'); params.push(role); }
-  params.push(id);
-  db.run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params, function(err){
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    res.json({ ok: true, changes: this.changes });
-  });
-});
-
-// borrar usuario
-app.delete('/api/admin/users/:id', requireLeader, (req, res) => {
-  const id = req.params.id;
-  db.run(`DELETE FROM users WHERE id = ?`, [id], function(err){
-    if (err) return res.status(500).json({ error: 'Error BD' });
-    res.json({ ok: true, changes: this.changes });
-  });
-});
-
-// --- sockets ---
-io.use((socket, next) => {
-  // allow sessions to be available on socket (basic)
-  const cookieString = socket.handshake.headers.cookie || '';
-  // for simplicity we skip cookie-session parsing here; the frontend will send user info on connect
-  next();
-});
-
-io.on('connection', (socket) => {
-  // frontend must send 'auth' with user object after connecting
-  let user = null;
-  socket.on('auth', (u) => {
-    user = u; // { id, username, role } from session validated by server endpoints (we trust frontend only after login route)
-    socket.user = user;
-  });
-
-  socket.on('sendMessage', (text) => {
-    if (!user) return;
-    const stmt = db.prepare(`INSERT INTO messages (user_id, username, role, text) VALUES (?, ?, ?, ?)`);
-    stmt.run(user.id, user.username, user.role, text, function(err){
-      if (err) return console.error('Error insert message', err);
-      const msg = { id: this.lastID, username: user.username, role: user.role, text, ts: new Date().toISOString() };
-      io.emit('newMessage', msg);
-      // Log en consola (requisito)
-      console.log(`[CHAT] ${msg.ts} - [${msg.role}] ${msg.username}: ${msg.text}`);
-    });
-    stmt.finalize();
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log('IMP SERVERS corriendo en http://localhost:' + PORT);
-});
+// ===== INICIAR SERVIDOR =====
+const PORT = 3000;
+http.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
