@@ -1,0 +1,12 @@
+[
+  {"username":"Oliver-imp","password":"$2a$10$Zf2.8Vx3r0djS1J4jK9b4uQ2V1oF8n6htmQfP.Zs0e1Q3Aq9Hg0cK","role":"Lider"},
+  {"username":"Aye_Russu","password":"$2a$10$examplehash11111111111111111111111111111111111111111111","role":"Colider"},
+  {"username":"Atlas","password":"$2a$10$examplehash22222222222222222222222222222222222222222222","role":"Veterano"},
+  {"username":"User4","password":"$2a$10$examplehash33333333333333333333333333333333333333333333","role":"Miembro"},
+  {"username":"User5","password":"$2a$10$examplehash44444444444444444444444444444444444444444444","role":"Miembro"},
+  {"username":"User6","password":"$2a$10$examplehash55555555555555555555555555555555555555555555","role":"Miembro"},
+  {"username":"User7","password":"$2a$10$examplehash66666666666666666666666666666666666666666666","role":"Miembro"},
+  {"username":"User8","password":"$2a$10$examplehash77777777777777777777777777777777777777777777","role":"Miembro"},
+  {"username":"User9","password":"$2a$10$examplehash88888888888888888888888888888888888888888888","role":"Miembro"},
+  {"username":"User10","password":"$2a$10$examplehash99999999999999999999999999999999999999999999","role":"Miembro"}
+]
