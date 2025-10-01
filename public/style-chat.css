@@ -1,0 +1,159 @@
+/* --------------------------------
+ * 1. ESTILOS BASE Y LAYOUT
+ * -------------------------------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #121212; 
+    color: #e0e0e0; 
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#chat-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    background-color: #1e1e1e;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    border-radius: 0; 
+    overflow: hidden;
+}
+
+/* --------------------------------
+ * 2. ESTILOS DEL CHAT (Con Botones Flotantes)
+ * -------------------------------- */
+#chat-header {
+    padding: 15px;
+    background-color: #282828;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #3a3a3a;
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+}
+
+#chat-header span {
+    flex-grow: 1;
+    text-align: center;
+}
+
+#logout-button {
+    padding: 5px 10px; 
+    background: #dc3545; 
+    color: white; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+
+#chat-messages {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-y: auto;
+    word-wrap: break-word;
+}
+
+.message-entry {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+#typing-indicator {
+    padding: 5px 10px; 
+    font-style: italic; 
+    color: #b3b3b3; 
+    min-height: 20px;
+    background-color: #1e1e1e;
+    border-top: 1px solid #3a3a3a;
+}
+
+#focus-container {
+    position: fixed;
+    bottom: 80px; 
+    right: 20px;
+    z-index: 50;
+}
+
+#focus-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #007bff; 
+    color: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 50px;
+    text-align: center;
+    display: block; 
+}
+
+#chat-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #3a3a3a;
+    background-color: #282828;
+    min-height: 70px;
+}
+
+#attach-button {
+    padding: 12px 15px;
+    background-color: #007bff; 
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-right: 10px;
+    transition: background-color 0.3s;
+}
+
+#attach-button:hover {
+    background-color: #0056b3;
+}
+
+#message-input {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #333;
+    color: #e0e0e0;
+    margin-right: 10px;
+}
+
+#send-button {
+    padding: 12px 18px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Estilos de Medios */
+.media-container img, .media-container video {
+    display: block;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+
+/* Colores de Rangos */
+.rank-tag { margin-right: 5px; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: inline-block;}
+.rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
+.rank-Líder { color: #FF4500; font-weight: bold; } 
+.rank-Colíder { color: #FFD700; font-weight: bold; } 
+.rank-Atlas { color: #00BFFF; font-weight: bold; } 
+.rank-Miembro { color: #8A2BE2; } 
+.rank-System { color: #999; }
+.connection-error { color: #ff4d4d; font-weight: bold; padding: 10px 0; text-align: center; }
