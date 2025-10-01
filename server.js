@@ -1,5 +1,5 @@
 // Servidor de Chat Persistente con Node.js y Express
-// VERSIÓN FINAL CON ARCHIVOS, ELIMINACIÓN ADMIN Y LIMPIEZA AUTOMÁTICA
+// VERSIÓN FINAL CON ARCHIVOS, ELIMINACIÓN ADMIN, LIMPIEZA AUTOMÁTICA E INDICADOR 'ESCRIBIENDO'
 
 const express = require('express');
 const fs = require('fs');
@@ -11,6 +11,9 @@ const HOST = '0.0.0.0';
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');
 const UPLOADS_DIR = path.join(__dirname, 'public/uploads'); 
 const LOCAL_IP = '192.168.100.101'; 
+
+// 🚨 VARIABLE DE ESTADO DE TECLEO: Guardamos el alias y el momento del último tecleo.
+let typingUsers = {}; 
 
 // ----------------------------------------------------
 // 1. CONFIGURACIÓN DE CARGA DE ARCHIVOS (Multer)
@@ -33,11 +36,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 } 
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB Límite de archivo
 }).single('file'); 
 
 // ----------------------------------------------------
-// 2. MIDDLEWARE GENERAL Y PERSISTENCIA
+// 2. MIDDLEWARE GENERAL Y PERSISTENCIA (JSON)
 // ----------------------------------------------------
 
 app.disable('x-powered-by'); 
@@ -50,7 +53,7 @@ function loadMessages() {
         const data = fs.readFileSync(MESSAGES_FILE, 'utf8');
         let messages = JSON.parse(data);
         
-        // 🚨 Asegurar que cada mensaje tenga un 'id' (importante para eliminar)
+        // Asegurar que cada mensaje tenga un 'id'
         messages = messages.map((msg, index) => {
             if (!msg.id) {
                 msg.id = (msg.timestamp || Date.now()) + '-' + index; 
@@ -99,13 +102,43 @@ function startAutoCleanup() {
 
 
 // ----------------------------------------------------
-// 4. ENDPOINTS DE API
+// 4. ENDPOINTS DE API (CHAT)
 // ----------------------------------------------------
 
 // GET /messages (Obtener historial)
 app.get('/messages', (req, res) => {
     res.json(loadMessages());
 });
+
+// GET /typing (Devuelve la lista de usuarios tecleando)
+app.get('/typing', (req, res) => {
+    const now = Date.now();
+    const activeTyping = {};
+    
+    // Filtra los usuarios cuya señal de tecleo tiene menos de 4 segundos
+    for (const alias in typingUsers) {
+        if (now - typingUsers[alias] < 4000) { 
+            activeTyping[alias] = typingUsers[alias];
+        }
+    }
+    
+    // Limpia y actualiza los usuarios activos
+    typingUsers = activeTyping; 
+    
+    res.json(Object.keys(typingUsers)); // Devuelve solo un array con los alias
+});
+
+// POST /typing (Actualiza el estado de tecleo)
+app.post('/typing', (req, res) => {
+    const alias = req.body.alias;
+    if (alias) {
+        typingUsers[alias] = Date.now(); // Actualiza la marca de tiempo
+        res.status(200).json({ status: 'ok' });
+    } else {
+        res.status(400).json({ error: 'Falta el alias.' });
+    }
+});
+
 
 // POST /upload (Maneja la subida de archivos)
 app.post('/upload', (req, res) => {
@@ -127,8 +160,12 @@ app.post('/messages', (req, res) => {
         return res.status(400).json({ error: 'Faltan campos.' });
     }
     
+    // Limpia el estado de tecleo del usuario que acaba de enviar un mensaje
+    if (typingUsers[newMessage.alias]) {
+         delete typingUsers[newMessage.alias];
+    }
+
     const messages = loadMessages();
-    
     const newId = Date.now() + '-' + messages.length; 
 
     messages.push({ 
@@ -145,7 +182,7 @@ app.post('/messages', (req, res) => {
     res.status(201).json({ status: 'ok' }); 
 });
 
-// 🚨 NUEVO ENDPOINT: DELETE /messages/:id (Elimina un mensaje por ID)
+// DELETE /messages/:id (Elimina un mensaje por ID - Solo Admins)
 app.delete('/messages/:id', (req, res) => {
     const messageIdToDelete = req.params.id;
     let messages = loadMessages();
@@ -177,10 +214,6 @@ app.listen(port, HOST, () => {
     console.log(`\n======================================================`);
     console.log(` ✅ SERVIDOR OPTIMIZADO: Node.js/Express (PM2 Ready)`);
     console.log(` 🔑 LIMPIEZA AUTOMÁTICA ACTIVADA: Cada 3 días.`);
-    console.log(`======================================================`);
-    console.log(`\n🔑 ENLACE LOCAL (PARA TI - CONSTANTE):`);
-    console.log(`   --> http://${LOCAL_IP}:${port}`);
-    console.log(`\n🌐 ENLACE PÚBLICO (PARA AMIGOS):`);
-    console.log(`   --> Cloudflared te dará el enlace.`);
-    console.log(`\n======================================================\n`);
+    console.log(` ✍️ SOPORTE 'ESCRIBIENDO...' HABILITADO.`);
+    console.log(`======================================================\n`);
 });
