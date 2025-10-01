@@ -1,1 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login IMP</title>
+  <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+  <div class="login-box">
+    <h2>🔒 Ingreso al Servidor IMP</h2>
+    <input type="text" id="username" placeholder="Usuario" autocomplete="off">
+    <input type="password" id="password" placeholder="Contraseña" autocomplete="off">
+    <button onclick="login()">Entrar</button>
+    <p id="error"></p>
+  </div>
 
+  <script>
+    async function login() {
+      let username = document.getElementById("username").value;
+      let password = document.getElementById("password").value;
+
+      let res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      let data = await res.json();
+      if (data.success) {
+        // Guardamos el usuario y redirigimos al chat
+        localStorage.setItem("username", data.username);
+        window.location.href = "/chat.html";
+      } else {
+        document.getElementById("error").innerText = "❌ Usuario o contraseña incorrectos";
+      }
+    }
+  </script>
+</body>
+</html>
