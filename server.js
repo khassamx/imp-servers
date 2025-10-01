@@ -1,96 +1,90 @@
 const express = require("express");
-const app = express();
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
+const bodyParser = require("body-parser");
 const fs = require("fs");
-const bcrypt = require("bcryptjs");
-const fetch = require("node-fetch");
-const os = require("os");
+const path = require("path");
+const translate = require("translate");
 
+// Configuración de Traducción
+translate.engine = "google"; 
+translate.key = undefined; // Sin API key usa traducción gratuita
+
+const app = express();
 const PORT = 3000;
 
-// Archivos de datos
-const USERS_FILE = "./data/users.json";
-const MESSAGES_FILE = "./data/messages.json";
-
-// Middleware
+// Middlewares
+app.use(bodyParser.json());
 app.use(express.static("public"));
-app.use(express.json());
 
-// ===== LOGIN =====
+// Archivos de datos
+const USERS_FILE = path.join(__dirname, "data", "users.json");
+const MESSAGES_FILE = path.join(__dirname, "data", "messages.json");
+
+// Leer JSON
+function readJSON(file) {
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file));
+}
+
+// Escribir JSON
+function writeJSON(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+// Ruta: login
 app.post("/login", (req, res) => {
-    const { username, password } = req.body;
-    const users = JSON.parse(fs.readFileSync(USERS_FILE));
-    const user = users.find(u => u.username === username);
+  const { username, password } = req.body;
+  const users = readJSON(USERS_FILE);
 
-    if (user && bcrypt.compareSync(password, user.password)) {
-        res.json({ success: true, role: user.role, username: user.username });
-    } else {
-        res.json({ success: false });
-    }
+  const user = users.find(u => u.username === username && u.password === password);
+  if (user) {
+    res.json({ success: true, username: user.username });
+  } else {
+    res.json({ success: false });
+  }
 });
 
-// ===== SOCKET.IO CHAT =====
-io.on("connection", socket => {
-    console.log("Nuevo usuario conectado");
-
-    // Enviar historial de mensajes
-    let messages = [];
-    try {
-        messages = JSON.parse(fs.readFileSync(MESSAGES_FILE));
-    } catch (err) {
-        console.log("No hay historial de mensajes, creando uno nuevo...");
-    }
-    socket.emit("chat-history", messages);
-
-    // Recibir mensaje
-    socket.on("chat-message", async data => {
-        const translatedText = await translateToSpanish(data.message);
-        const message = {
-            username: data.username,
-            role: data.role,
-            message: translatedText,
-            date: new Date()
-        };
-
-        messages.push(message);
-        fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2));
-
-        io.emit("chat-message", message);
-        console.log(`[${message.role}] ${message.username}: ${message.message}`);
-    });
+// Ruta: obtener mensajes
+// La ruta ahora puede aceptar un parámetro 'lastIndex' para optimizar la carga
+app.get("/messages", (req, res) => {
+  const messages = readJSON(MESSAGES_FILE);
+  let lastIndex = parseInt(req.query.lastIndex) || 0;
+  
+  // Devuelve solo los mensajes nuevos desde el índice solicitado
+  const newMessages = messages.slice(lastIndex);
+  
+  res.json({
+    messages: newMessages,
+    totalCount: messages.length // Devuelve el conteo total para que el cliente sepa dónde empezar la próxima vez
+  });
 });
 
-// ===== DETECTAR IP AUTOMÁTICA =====
-function getLocalIP() {
-    const nets = os.networkInterfaces();
-    for (const name of Object.keys(nets)) {
-        for (const net of nets[name]) {
-            if (net.family === "IPv4" && !net.internal) {
-                return net.address;
-            }
-        }
-    }
-    return "localhost";
-}
+// Ruta: enviar mensaje con traducción y manejo de errores
+app.post("/messages", async (req, res) => {
+  let { username, text } = req.body;
+  const messages = readJSON(MESSAGES_FILE);
+  let translatedText = text; // Por defecto, es el mismo texto
 
-// ===== TRADUCCIÓN AUTOMÁTICA =====
-async function translateToSpanish(text) {
-    try {
-        const res = await fetch("https://libretranslate.de/translate", {
-            method: "POST",
-            body: JSON.stringify({ q: text, source: "auto", target: "es" }),
-            headers: { "Content-Type": "application/json" }
-        });
-        const data = await res.json();
-        return data.translatedText || text;
-    } catch (err) {
-        return text; // Si falla, devolver el texto original
-    }
-}
+  try {
+    // Intentar traducir
+    translatedText = await translate(text, { to: "es" });
+  } catch (error) {
+    console.error("❌ Error de traducción:", error.message);
+    // Si la traducción falla, usamos el texto original y avisamos
+    translatedText = `(Traducción fallida) ${text}`; 
+  }
 
-// ===== INICIAR SERVIDOR =====
-http.listen(PORT, "0.0.0.0", () => {
-    const ip = getLocalIP();
-    console.log(`Servidor corriendo en http://${ip}:${PORT}`);
+  const newMessage = { 
+    username, 
+    text, 
+    translatedText, 
+    time: new Date().toISOString() 
+  };
+  messages.push(newMessage);
+  writeJSON(MESSAGES_FILE, messages);
+
+  res.json(newMessage);
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
