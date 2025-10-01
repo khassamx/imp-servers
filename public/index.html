@@ -5,233 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Privado IMP Server</title>
 
+    <!-- METATAGS PARA ASPECTO DE APP -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e1e1e"> 
 
-    <style>
-        /* --------------------------------
-         * 1. ESTILOS BASE Y LAYOUT
-         * -------------------------------- */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #121212; 
-            color: #e0e0e0; 
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-            background-color: #1e1e1e;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-            border-radius: 0; 
-            overflow: hidden;
-        }
-
-        /* --------------------------------
-         * 2. ESTILOS DE LA VENTANA DE LOGIN
-         * -------------------------------- */
-        #login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #121212; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            z-index: 1000;
-        }
-
-        #login-form {
-            background-color: #1e1e1e;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            width: 90%;
-            max-width: 350px;
-        }
-        
-        #username-input, #login-button {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-        }
-        
-        /* --------------------------------
-         * 3. ESTILOS DEL CHAT (Con Botones Flotantes)
-         * -------------------------------- */
-        #chat-header {
-            padding: 15px;
-            background-color: #282828;
-            font-size: 1.1em;
-            font-weight: bold;
-            text-align: center;
-            border-bottom: 1px solid #3a3a3a;
-            display: flex; 
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        #chat-header span {
-            flex-grow: 1;
-            text-align: center;
-        }
-        
-        #logout-button {
-            padding: 5px 10px; 
-            background: #dc3545; 
-            color: white; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 0.8em;
-            margin-left: 10px;
-        }
-
-        #chat-messages {
-            flex-grow: 1;
-            padding: 10px;
-            overflow-y: auto;
-            word-wrap: break-word;
-        }
-        
-        .message-entry {
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        #typing-indicator {
-            padding: 5px 10px; 
-            font-style: italic; 
-            color: #b3b3b3; 
-            min-height: 20px;
-            background-color: #1e1e1e;
-            border-top: 1px solid #3a3a3a;
-        }
-
-        #focus-container {
-            position: fixed;
-            bottom: 80px; 
-            right: 20px;
-            z-index: 50;
-        }
-        
-        #focus-button {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #007bff; 
-            color: white;
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            font-size: 24px;
-            cursor: pointer;
-            line-height: 50px;
-            text-align: center;
-            display: none; 
-        }
-
-        #chat-input-area {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid #3a3a3a;
-            background-color: #282828;
-            min-height: 70px;
-        }
-
-        #attach-button {
-            padding: 12px 15px;
-            background-color: #007bff; 
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1em;
-            margin-right: 10px;
-            transition: background-color 0.3s;
-        }
-
-        #attach-button:hover {
-            background-color: #0056b3;
-        }
-
-        #message-input {
-            flex-grow: 1;
-            padding: 12px;
-            border-radius: 6px;
-            background-color: #333;
-            color: #e0e0e0;
-            margin-right: 10px;
-        }
-
-        #send-button {
-            padding: 12px 18px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        /* Estilos de Medios */
-        .media-container img, .media-container video {
-            display: block;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        
-        /* Colores de Rangos */
-        .rank-tag { margin-right: 5px; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: inline-block;}
-        .rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
-        .rank-Líder { color: #FF4500; font-weight: bold; } 
-        .rank-Colíder { color: #FFD700; font-weight: bold; } 
-        .rank-Atlas { color: #00BFFF; font-weight: bold; } 
-        .rank-Miembro { color: #8A2BE2; } 
-        .rank-System { color: #999; }
-        .connection-error { color: #ff4d4d; font-weight: bold; padding: 10px 0; text-align: center; }
-
-    </style>
+    <!-- ENLACE A LOS ESTILOS ESPECÍFICOS DEL CHAT -->
+    <link rel="stylesheet" href="style-chat.css"> 
 </head>
 <body>
 
-    <div id="login-screen">
-        <div id="login-form">
-            <h2>Ingresar al Chat IMP Server</h2>
-            <p>⚠️ El **Usuario** es la **Clave Secreta** para acceder.</p>
-            <input type="text" id="username-input" placeholder="Ingresa tu Clave Secreta/Usuario">
-            <button id="login-button" onclick="login()">Acceder</button>
-            <div id="login-error"></div>
-        </div>
-    </div>
-
-    <div id="chat-container" style="display:none;">
+    <!-- Contenedor Principal del Chat -->
+    <div id="chat-container">
         <div id="chat-header">
             <span style="visibility:hidden;">Salir</span>
             Chat Privado IMP Server - <span id="current-alias"></span>
             <button id="logout-button" onclick="logout()">Salir</button>
         </div>
         
+        <!-- Área de Mensajes -->
         <div id="chat-messages">
-            </div>
+            <!-- Los mensajes se insertarán aquí -->
+        </div>
         
+        <!-- Indicador de 'Está Escribiendo' -->
         <div id="typing-indicator">
-            </div>
+            <!-- El mensaje de tecleo va aquí -->
+        </div>
         
+        <!-- Área de Input y Envío -->
         <div id="chat-input-area">
             <input type="file" id="file-input" style="display:none;" onchange="handleFileSelection()">
             <button id="attach-button" onclick="document.getElementById('file-input').click()">📎</button>
@@ -241,454 +44,41 @@
         </div>
     </div>
     
+    <!-- Botón Flotante para el Foco (Móvil) -->
     <div id="focus-container">
         <button id="focus-button" onclick="focusInput()">+</button>
     </div>
 
+    <!-- ENLACE AL ARCHIVO DE LÓGICA GENERAL -->
+    <script src="app.js"></script>
+    
     <script>
-        // ----------------------------------------------------
-        // 🔑 DATA DE USUARIOS Y PERMISOS
-        // ----------------------------------------------------
-        const USER_DATA = {
-            "Keko1283": { alias: "Khassam", rank: "Fundador" }, 
-            "Titan12831283": { alias: "Titán IMP", rank: "Líder" }, 
-            "Naim12831283": { alias: "Naim Russu", rank: "Colíder" }, 
-            "Atlas12831283": { alias: "Atlas", rank: "Atlas" },
-            "milagroscon4@gmail.com": { alias: "Aye Russu", rank: "Miembro" } 
-        };
-
-        const ADMIN_RANKS = ["Fundador", "Líder"];
-
-        // 🚨 CORRECCIÓN AUTO-LOGIN: Intentamos cargar la sesión guardada inmediatamente.
-        let currentUser = null; 
-        const savedKey = localStorage.getItem('chat_user_key');
-        if (savedKey && USER_DATA[savedKey]) {
-            currentUser = USER_DATA[savedKey];
-            currentUser.key = savedKey; // Guardamos la clave para consistencia
-        }
-
-        const messagesDiv = document.getElementById('chat-messages');
-        let connectionErrorShown = false; 
-        let selectedFile = null; 
-        
-        const typingIndicatorDiv = document.getElementById('typing-indicator');
-        let typingTimer = null; 
-
-        // Lógica de URL corregida
-        const protocol = window.location.protocol; 
-        const hostname = window.location.hostname;
-        let apiHost = hostname;
-        if (protocol === 'http:') {
-            apiHost = hostname + ':3000';
-        }
-        const SERVER_URL = protocol + '//' + apiHost;
-        
-        const POLLING_INTERVAL = 3000; 
-        let lastMessageCount = 0;
-
-
-        // ----------------------------------------------------
-        // 1. LÓGICA DE INICIO Y PERSISTENCIA
-        // ----------------------------------------------------
-
-        function login(userKey) {
-            const username = userKey || document.getElementById('username-input').value.trim();
-            const errorDiv = document.getElementById('login-error');
-            errorDiv.textContent = '';
-
-            if (USER_DATA[username]) {
-                currentUser = USER_DATA[username];
-                
-                // GUARDAR SESIÓN EN LOCALSTORAGE
-                localStorage.setItem('chat_user_key', username);
-                localStorage.setItem('chat_user_alias', currentUser.alias);
-                localStorage.setItem('chat_user_rank', currentUser.rank);
-
-                // LLAMAMOS AL CHECK PARA INICIAR LA INTERFAZ
-                checkAutoLogin(); 
-            } else {
-                errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
-            }
-        }
-        
-        function checkAutoLogin() {
-            if (currentUser) {
-                // Si la sesión se cargó arriba o se acaba de hacer login, activamos la interfaz y el polling
-                document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('chat-container').style.display = 'flex';
-                document.getElementById('focus-button').style.display = 'block'; 
-                
-                requestNotificationPermission();
-
-                fetchMessages();
-                setInterval(fetchMessages, POLLING_INTERVAL); 
-            } else {
-                // Si no hay sesión, mostramos el login e iniciamos el foco.
-                document.getElementById('username-input').focus();
-            }
-        }
-        
-        function logout() {
-            localStorage.removeItem('chat_user_key');
-            localStorage.removeItem('chat_user_alias');
-            localStorage.removeItem('chat_user_rank');
-            
-            currentUser = null;
-            location.reload(); // Recargar para volver a la pantalla de login
-        }
-        
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-        }
-
-        function focusInput() {
-            document.getElementById('message-input').focus();
-        }
-        
-        // ----------------------------------------------------
-        // 2. LÓGICA DE ARCHIVOS Y ADMINISTRACIÓN
-        // ----------------------------------------------------
-
-        function handleFileSelection() {
-            const input = document.getElementById('file-input');
-            selectedFile = input.files[0];
-            
-            if (selectedFile) {
-                const messageInput = document.getElementById('message-input');
-                messageInput.placeholder = `Archivo listo: ${selectedFile.name}. Presiona Enviar.`;
-                messageInput.value = ''; 
-                focusInput();
-            }
-        }
-
-        async function uploadFileAndSendMessage(messageData) {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            const uploadResponse = await fetch(SERVER_URL + '/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!uploadResponse.ok) {
-                const error = await uploadResponse.json();
-                throw new Error(`Fallo la subida del archivo: ${error.error || 'Desconocido'}`);
-            }
-
-            const uploadData = await uploadResponse.json();
-            
-            messageData.fileUrl = uploadData.fileUrl;
-            messageData.originalName = uploadData.originalName;
-            messageData.text = document.getElementById('message-input').value.trim() || null;
-            
-            selectedFile = null;
-            document.getElementById('file-input').value = ''; 
-            document.getElementById('message-input').placeholder = 'Escribe tu mensaje o agrega un archivo...';
-        }
-
-        async function deleteMessage(messageId) {
-            if (!confirm("¿Estás seguro de que quieres eliminar este mensaje?")) {
+        // Inicializar chat al cargar la página
+        window.onload = function() {
+            // Chequeamos si la sesión está activa, si no, redirigimos a login.html
+            if (!currentUser) {
+                window.location.href = '/login.html';
                 return;
             }
             
-            try {
-                const response = await fetch(`${SERVER_URL}/messages/${messageId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    console.log(`Mensaje ${messageId} eliminado correctamente.`);
-                    fetchMessages(); 
+            // Si la sesión es activa, inicializamos la UI y el polling
+            document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
+            
+            // Evento de tecleo modificado para enviar la señal
+            document.getElementById('message-input').addEventListener('keypress', function(e) { 
+                if (e.key !== 'Enter') {
+                    sendTypingSignal();
                 } else {
-                    console.error('Error al eliminar mensaje:', response.statusText);
-                    alert('No se pudo eliminar el mensaje.');
+                    sendMessage(); 
                 }
-            } catch (error) {
-                console.error('Error de red al eliminar:', error);
-                alert('No se pudo conectar con el servidor para eliminar el mensaje.');
-            }
-        }
-
-
-        // ----------------------------------------------------
-        // 3. LÓGICA DE ENVÍO Y RECEPCIÓN
-        // ----------------------------------------------------
-        
-        function sendTypingSignal() {
-            if (!currentUser) return;
-
-            if (typingTimer) {
-                clearTimeout(typingTimer);
-            }
-            
-            fetch(SERVER_URL + '/typing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ alias: currentUser.alias })
-            }).catch(error => { console.warn('Error al enviar señal de tecleo:', error); });
-            
-            typingTimer = setTimeout(() => {
-                typingTimer = null;
-            }, 3000); 
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-
-            if (!text && !selectedFile) return;
-            if (text.length > 256) {
-                 alert('Mensaje de texto demasiado largo (máx 256 caracteres).');
-                 return;
-            }
-
-            const messageData = {
-                alias: currentUser.alias,
-                rank: currentUser.rank,
-                text: text 
-            };
-            
-            try {
-                if (selectedFile) {
-                    await uploadFileAndSendMessage(messageData);
-                }
-
-                const response = await fetch(SERVER_URL + '/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(messageData)
-                });
-
-                if (response.ok) {
-                    input.value = ''; 
-                    fetchMessages(); 
-                    input.focus();
-                } else {
-                    console.error('Error al enviar mensaje:', response.statusText);
-                    alert('Error al enviar. Revisa la consola para más detalles.');
-                }
-            } catch (error) {
-                console.error('Error de red al enviar/subir:', error);
-                alert('No se pudo completar el envío: ' + error.message);
-            }
-        }
-        
-        function fetchTypingStatus() {
-            fetch(SERVER_URL + '/typing')
-                .then(response => {
-                    if (!response.ok) throw new Error('Fallo al obtener estado de tecleo.');
-                    return response.json();
-                })
-                .then(typingAliases => {
-                    const othersTyping = typingAliases.filter(alias => alias !== currentUser.alias);
-                    
-                    if (othersTyping.length > 0) {
-                        const aliases = othersTyping.join(', ');
-                        let text = `${aliases} está escribiendo...`;
-                        if (othersTyping.length > 1) {
-                            text = `${aliases} están escribiendo...`;
-                        }
-                        typingIndicatorDiv.textContent = text;
-                    } else {
-                        typingIndicatorDiv.textContent = '';
-                    }
-                })
-                .catch(error => { console.warn('Error al obtener tecleo:', error); });
-        }
-
-
-        function fetchMessages() {
-            fetch(SERVER_URL + '/messages')
-                .then(response => {
-                    if (!response.ok) { throw new Error('Servidor no responde'); }
-                    return response.json();
-                })
-                .then(messages => {
-                    if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
-                    
-                    fetchTypingStatus(); 
-
-                    if (messages.length > lastMessageCount) {
-                        const newMessage = messages[messages.length - 1]; 
-                        displaySystemNotification(newMessage); 
-                        
-                        displayMessages(messages);
-                        lastMessageCount = messages.length;
-                    }
-                })
-                .catch(error => {
-                    if (!connectionErrorShown) { displayConnectionError(); connectionErrorShown = true; }
-                });
-        }
-
-        function displaySystemNotification(message) {
-            if (Notification.permission === 'granted' && !document.hasFocus()) {
-                const options = {
-                    body: message.text || (message.fileUrl ? 'Archivo adjunto' : 'Mensaje nuevo'),
-                    icon: 'logo.png',
-                    tag: 'new-chat-message' 
-                };
-                new Notification(`[${message.rank}] ${message.alias}:`, options);
-            }
-        }
-        
-        // ----------------------------------------------------
-        // 4. LÓGICA DE RENDERIZADO AVANZADO
-        // ----------------------------------------------------
-        
-        // 🚨 NUEVA FUNCIÓN: Conversión de Markdown a HTML (Negritas/Itálicas)
-        function formatText(text) {
-            if (!text) return '';
-            // Negritas: *texto* -> <b>texto</b>
-            let formattedText = text.replace(/\*([^\*]+)\*/g, '<b>$1</b>');
-            // Itálicas: _texto_ -> <i>texto</i>
-            formattedText = formattedText.replace(/\_([^\_]+)\_/g, '<i>$1</i>');
-            return formattedText;
-        }
-        
-        // 🚨 NUEVA FUNCIÓN: Formato de la hora
-        function formatTimestamp(isoString) {
-            const date = new Date(isoString);
-            return `[${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}]`;
-        }
-        
-        function displayMessages(messages) {
-            messagesDiv.innerHTML = ''; 
-            
-            const isCurrentUserAdmin = ADMIN_RANKS.includes(currentUser.rank); 
-            
-            messages.forEach(msg => {
-                const messageEntry = document.createElement('div');
-                messageEntry.className = 'message-entry';
-                
-                const headerContainer = document.createElement('div');
-                headerContainer.style.display = 'flex';
-                headerContainer.style.alignItems = 'center';
-                
-                // 1. Marca de Tiempo
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = formatTimestamp(msg.timestamp);
-                timeSpan.style.color = '#777';
-                timeSpan.style.marginRight = '8px';
-                
-                // 2. Rango y Alias
-                const rankSpan = document.createElement('span');
-                rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
-                rankSpan.textContent = '[' + msg.rank + ']';
-                
-                const aliasSpan = document.createElement('b');
-                aliasSpan.textContent = msg.alias + ':';
-                aliasSpan.style.color = '#fff'; 
-                aliasSpan.style.marginLeft = '5px';
-                
-                headerContainer.appendChild(timeSpan);
-                headerContainer.appendChild(rankSpan);
-                headerContainer.appendChild(aliasSpan);
-                
-                // 3. BOTÓN DE ELIMINAR (Solo para Admins)
-                if (isCurrentUserAdmin && msg.id) {
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = '❌';
-                    deleteButton.title = 'Eliminar mensaje';
-                    deleteButton.onclick = () => deleteMessage(msg.id);
-                    deleteButton.style.marginLeft = 'auto'; 
-                    deleteButton.style.background = 'none';
-                    deleteButton.style.border = 'none';
-                    deleteButton.style.color = '#ff4d4d';
-                    deleteButton.style.cursor = 'pointer';
-                    
-                    headerContainer.appendChild(deleteButton);
-                }
-                
-                messageEntry.appendChild(headerContainer);
-
-                // 4. Contenido del Mensaje
-                const contentContainer = document.createElement('div');
-                
-                if (msg.fileUrl) {
-                    const mediaContainer = document.createElement('div');
-                    mediaContainer.className = 'media-container';
-                    mediaContainer.style.marginTop = '5px';
-                    
-                    const fileExtension = msg.fileUrl.split('.').pop().toLowerCase();
-                    const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension);
-                    const isVideo = ['mp4', 'webm', 'ogg'].includes(fileExtension);
-
-                    if (isImage) {
-                        const img = document.createElement('img');
-                        img.src = msg.fileUrl;
-                        img.style.maxWidth = '100%';
-                        img.maxHeight = '250px';
-                        mediaContainer.appendChild(img);
-                    } else if (isVideo) {
-                        const video = document.createElement('video');
-                        video.src = msg.fileUrl;
-                        video.controls = true;
-                        video.style.maxWidth = '100%';
-                        video.maxHeight = '250px';
-                        mediaContainer.appendChild(video);
-                    }
-                    
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = msg.fileUrl;
-                    downloadLink.download = msg.originalName || 'archivo_descargado';
-                    downloadLink.textContent = `[Descargar: ${msg.originalName || 'Archivo'}]`;
-                    downloadLink.style.color = '#00BFFF';
-                    downloadLink.style.display = 'block';
-                    
-                    mediaContainer.appendChild(downloadLink);
-                    contentContainer.appendChild(mediaContainer);
-                }
-
-                if (msg.text) {
-                    const textNode = document.createElement('div');
-                    textNode.style.marginLeft = '5px';
-                    // 🚨 APLICAR FORMATO MARKDOWN
-                    textNode.innerHTML = formatText(msg.text); 
-                    contentContainer.appendChild(textNode);
-                }
-                
-                messageEntry.appendChild(contentContainer);
-                messagesDiv.appendChild(messageEntry);
             });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-
-        // --- Funciones Auxiliares ---
-        function displayConnectionError() {
-            if (!document.getElementById('connection-error-message')) {
-                const errorDiv = document.createElement('div');
-                errorDiv.id = 'connection-error-message';
-                errorDiv.className = 'connection-error';
-                errorDiv.textContent = '❌ ERROR DE CONEXIÓN CON EL SERVIDOR. Revisa el túnel Cloudflare.';
-                messagesDiv.appendChild(errorDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight; 
-            }
-        }
-        
-        function removeConnectionError() {
-            const errorDiv = document.getElementById('connection-error-message');
-            if (errorDiv) { errorDiv.remove(); }
-        }
-
-        // Eventos de teclado y carga inicial
-        document.getElementById('username-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { login(); } });
-        
-        document.getElementById('message-input').addEventListener('keypress', function(e) { 
-            if (e.key !== 'Enter') {
-                sendTypingSignal();
-            } else {
-                sendMessage(); 
-            }
-        });
-        
-        // CHEQUEO DE INICIO DE SESIÓN AL CARGAR
-        window.onload = function() { checkAutoLogin(); };
-        
+            
+            requestNotificationPermission();
+            focusInput();
+            
+            fetchMessages();
+            setInterval(fetchMessages, POLLING_INTERVAL); 
+        };
     </script>
 </body>
 </html>
