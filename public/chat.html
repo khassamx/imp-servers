@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Chat IMP</title>
-  <link rel="stylesheet" href="/css/style.css"> </head>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
 <body>
   
   <audio id="background-music" loop>
-    <source src="/assets/retro_theme.mp3" type="audio/mpeg"> </audio>
+    <source src="/assets/retro_theme.mp3" type="audio/mpeg">
+  </audio>
 
   <h2>💀 Chat IMP</h2>
   <div id="messages"></div>
@@ -27,14 +29,15 @@
 
     if (storedPosition) {
         audio.currentTime = parseFloat(storedPosition);
-        audio.play().catch(error => { console.log("Música lista, pendiente de interacción."); });
+        audio.play().catch(error => {});
         localStorage.removeItem("musicPosition");
     } else {
         audio.play().catch(e => {});
     }
 
-    // LÓGICA DE CARGA Y ENVÍO DEL CHAT (restante igual)
+    // LÓGICA DE CARGA DE CHAT (código de carga incremental)
     async function loadMessages() {
+      // ... (código loadMessages sin cambios)
       let res = await fetch(`/messages?lastIndex=${currentMessageCount}`);
       let data = await res.json();
       
@@ -53,8 +56,14 @@
     }
 
     async function sendMessage() {
-      let text = document.getElementById("msg").value.trim(); // TRIM para optimizar
+      let text = document.getElementById("msg").value.trim();
       if (!text) return;
+
+      // Optimización: Mostrar el mensaje inmediatamente antes de la respuesta del servidor
+      const temporaryMessage = document.createElement('p');
+      temporaryMessage.innerHTML = `<b>${username}</b>: (Enviando...) ${text}`;
+      messagesContainer.appendChild(temporaryMessage);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight; // SCROLL UX
 
       await fetch("/messages", {
         method: "POST",
@@ -63,10 +72,11 @@
       });
 
       document.getElementById("msg").value = "";
+      // El siguiente loadMessages recargará y reemplazará el "(Enviando...)" con la traducción.
       loadMessages(); 
     }
     
-    // LÓGICA PARA LA TECLA ENTER en el campo de mensaje
+    // Habilitar la tecla ENTER
     document.getElementById("msg").addEventListener("keypress", function(event) {
       if (event.key === 'Enter') { 
         sendMessage();
