@@ -7,7 +7,7 @@
   
   <style>
     /* --------------------------------
-     * 1. ANIMACIONES & BASE
+     * 1. ANIMACIONES & BASE (Pintura Viva)
      * -------------------------------- */
     @keyframes movement { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
     @keyframes twinkle { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.7); } }
@@ -33,14 +33,14 @@
     }
 
     /* --------------------------------
-     * 2. CONTENEDOR Y FORMULARIO
+     * 2. CONTENEDOR Y FORMULARIO (LOGIN)
      * -------------------------------- */
     .container {
       background: rgba(0,0,0,0.85); padding: 30px 40px; border-radius: 15px;
       text-align: center; box-shadow: 0 0 40px #ff69b4; border: 1px solid #00ffff;
       z-index: 10; width: 90%; max-width: 500px;
     }
-    #login-container { max-width: 350px; } /* Más pequeño para el login */
+    #login-container { max-width: 350px; } 
 
     h1 { margin-bottom: 25px; color: #00ffff; }
     #password { display: none; } /* Ocultar Contraseña */
@@ -67,14 +67,14 @@
     }
     #chat-messages p { margin: 5px 0; font-size: 0.9em; line-height: 1.3; }
     
-    /* Colores para Rangos */
+    /* Colores para Rangos (CSS) */
     .rank-Admin { color: #ff0000; font-weight: bold; } 
     .rank-Moderador { color: #ffcc00; } 
     .rank-VIP { color: #00ff00; } 
     .rank-Usuario { color: #8888ff; }
     .rank-System { color: #999; }
     
-    #chat-messages .rank-tag { margin-right: 5px; } /* Etiqueta de rango */
+    #chat-messages .rank-tag { margin-right: 5px; } 
     #chat-messages b { color: #ff69b4; font-weight: bold; }
     
     /* Input y botón del Chat */
@@ -111,7 +111,7 @@
   </div>
 
   <script>
-    // Variables y Mapeo de RANGOS
+    // Variables y Mapeo de RANGOS (JS)
     const loginContainer = document.getElementById("login-container");
     const chatContainer = document.getElementById("chat-container");
     const loginForm = document.getElementById("loginForm");
@@ -119,11 +119,13 @@
     const loginButton = document.getElementById("loginButton");
     const usernameInput = document.getElementById("username");
     const chatBox = document.getElementById('chat-messages');
+    const msgInput = document.getElementById('msg');
     
     let currentAlias = null; 
     let currentRank = null; 
 
-    // Data de Usuarios y RANGOS (Clave siempre en minúsculas)
+    // 🔑 DATA DE USUARIOS Y RANGOS (Control total desde Index.html)
+    // La clave debe ser siempre en minúsculas para la verificación insensible a mayúsculas.
     const USER_DATA = {
         "oliver": { alias: "Oliver", rank: "Admin" },
         "keko.imp": { alias: "Keko.IMP", rank: "Moderador" },
@@ -134,8 +136,7 @@
     // Función central para añadir mensajes al chat
     function addMessage(alias, text, rank = 'Usuario') {
         const newMessage = document.createElement('p');
-        // Usamos una clase genérica para la etiqueta de rango
-        const rankClass = rank.replace(/\s/g, ''); // Limpiar espacios si los hay
+        const rankClass = rank.replace(/\s/g, ''); 
         
         newMessage.innerHTML = `
             <span class="rank-${rankClass} rank-tag">[${rank}]</span> 
@@ -151,15 +152,16 @@
         currentAlias = userData.alias;
         currentRank = userData.rank;
         
-        // Mostrar el alias y el rango en el título del chat
+        // Mostrar alias y rango en el título
         document.getElementById('chat-title').innerHTML = `Chat Global - Conectado como: <span class="rank-${currentRank.replace(/\s/g, '')}">${currentAlias}</span>`;
         
+        // Transición: Ocultar Login, Mostrar Chat
         loginContainer.style.display = 'none';
         chatContainer.style.display = 'block';
         
-        document.getElementById('msg').focus();
+        msgInput.focus();
         
-        // Mensaje de Bienvenida (Sistema)
+        // Mensaje de Bienvenida del Sistema
         addMessage("Sistema", `¡Bienvenido, ${currentAlias}! Tu rango es ${currentRank}.`, 'System');
     }
 
@@ -170,11 +172,11 @@
       const inputUsername = usernameInput.value.trim();
       const normalizedUsername = inputUsername.toLowerCase(); 
 
-      // Deshabilitar interfaz
+      // Deshabilitar interfaz mientras se procesa
       loginButton.disabled = true;
       usernameInput.disabled = true;
 
-      // Verificación
+      // Verificación insensible a mayúsculas usando USER_DATA
       if(USER_DATA.hasOwnProperty(normalizedUsername)){
         
         message.textContent = "🔄 Verificando...";
@@ -188,7 +190,6 @@
           message.textContent = `✅ Usuario verificado. Iniciando chat...`;
           message.style.color = "lightgreen";
           
-          // Iniciar el chat
           startChat(userData); 
           
         }, 1500); 
@@ -208,20 +209,20 @@
     // --------------------- FUNCIONES DE CHAT ---------------------
     
     function sendMessage() {
-        const input = document.getElementById('msg');
-        const text = input.value.trim();
+        const text = msgInput.value.trim();
 
         if (text === '') return;
 
-        // Añadir el mensaje al chat
+        // Añadir el mensaje al chat con el rango del usuario actual
         addMessage(currentAlias, text, currentRank);
         
-        // Limpiar input
-        input.value = '';
-        input.focus();
+        // Limpiar input y reenfocar
+        msgInput.value = '';
+        msgInput.focus();
     }
     
     function logout() {
+        // Limpiar estados y regresar a la pantalla de login
         currentAlias = null;
         currentRank = null;
         chatContainer.style.display = 'none';
@@ -234,23 +235,23 @@
         message.textContent = '';
         usernameInput.focus();
         
-        // Limpiar mensajes del chat (opcional)
+        // Limpiar mensajes del chat 
         chatBox.innerHTML = ''; 
     }
 
-    // --------------------- LISTENERS ---------------------
+    // --------------------- LISTENERS (Enter y Click) ---------------------
     loginForm.addEventListener("submit", handleLogin);
     
     // Manejar la tecla Enter en el campo de usuario
     usernameInput.addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
-            event.preventDefault();
+            event.preventDefault(); 
             handleLogin(event);
         }
     });
     
     // Manejar la tecla Enter en el campo de mensaje
-    document.getElementById("msg").addEventListener("keypress", function(event) {
+    msgInput.addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
             sendMessage();
