@@ -1,9 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 body {
-  /* Fondo de galaxia */
-  background: url('galaxy_pixel_art.jpeg') no-repeat center center fixed; /* Asegúrate de que 'galaxy_pixel_art.jpeg' sea el nombre de tu imagen y esté en la carpeta 'public' */
+  /* Ruta de la imagen actualizada */
+  background: url('/assets/galaxy.jpg') no-repeat center center fixed; 
   background-size: cover;
-  color: #CCEECC; /* Texto verde claro para contraste */
-  font-family: 'Press Start 2P', cursive, monospace; /* Fuente pixelada, como alternativa 'monospace' */
+  color: #CCEECC; 
+  font-family: 'Press Start 2P', cursive, monospace; 
   text-align: center;
   margin: 0;
   padding: 20px;
@@ -11,133 +13,107 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Centrar el contenido verticalmente */
+  justify-content: center;
 }
 
-/* Fuente pixelada importada */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* Resto de estilos... (Se mantiene el código de las secciones anteriores) */
 
-
-/* Estilos para la caja del login - replicando la imagen */
 .login-box {
-  background: rgba(0, 0, 0, 0.7); /* Fondo oscuro semitransparente para la caja del login */
-  border: 2px solid #FF0077; /* Borde rojo/rosa brillante */
-  box-shadow: 0 0 15px #FF0077, 0 0 30px #FF0077; /* Efecto de brillo intenso */
-  padding: 30px 40px; /* Más padding para que la caja sea más grande */
-  margin-top: 50px; /* Ajusta según necesites centrar */
-  border-radius: 8px; /* Bordes ligeramente redondeados */
-  max-width: 400px; /* Ancho máximo para que no sea muy grande en pantallas grandes */
-  width: 90%; /* Ancho responsivo */
+  background: rgba(0, 0, 0, 0.7); 
+  border: 2px solid #FF0077; 
+  box-shadow: 0 0 15px #FF0077, 0 0 30px #FF0077; 
+  padding: 30px 40px; 
+  margin-top: 50px; 
+  border-radius: 8px; 
+  max-width: 400px; 
+  width: 90%; 
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Espacio entre los elementos */
+  gap: 15px; 
 }
 
-.login-box h2 {
-  color: #FF66AA; /* Título en un rosa vibrante */
+.login-box h2, h2 {
+  color: #FF66AA; 
   margin-bottom: 20px;
-  text-shadow: 0 0 5px #FF0077; /* Sombra al texto del título para más brillo */
+  text-shadow: 0 0 5px #FF0077; 
 }
 
-/* Estilo para los inputs de usuario y contraseña */
 input {
   display: block;
-  width: calc(100% - 20px); /* Ancho del input con padding */
+  width: calc(100% - 20px); 
   padding: 10px;
-  border: 1px solid #FF0077; /* Borde rojo/rosa */
+  border: 1px solid #FF0077; 
   outline: none;
-  background: #330033; /* Fondo oscuro morado/rosa */
-  color: #CCEECC; /* Texto del input en verde claro */
-  border-radius: 4px; /* Ligeramente redondeado */
-  font-family: 'Press Start 2P', cursive, monospace; /* Fuente pixelada */
-  font-size: 0.8em; /* Tamaño de fuente más pequeño para pixel art */
-  box-shadow: 0 0 5px rgba(255, 0, 119, 0.5); /* Pequeño brillo al input */
-  transition: all 0.3s ease; /* Transición suave para el focus */
+  background: #330033; 
+  color: #CCEECC; 
+  border-radius: 4px; 
+  font-family: 'Press Start 2P', cursive, monospace; 
+  font-size: 0.8em; 
+  box-shadow: 0 0 5px rgba(255, 0, 119, 0.5); 
+  transition: all 0.3s ease; 
 }
 
 input:focus {
-  border-color: #FF66AA; /* Borde más brillante al enfocar */
-  box-shadow: 0 0 8px #FF66AA, 0 0 15px rgba(255, 102, 170, 0.5); /* Brillo más fuerte al enfocar */
-  background: #440044; /* Fondo un poco más claro al enfocar */
+  border-color: #FF66AA; 
+  box-shadow: 0 0 8px #FF66AA, 0 0 15px rgba(255, 102, 170, 0.5); 
+  background: #440044; 
 }
 
-/* Estilo para el botón de entrar */
 button {
-  background: #FF0077; /* Fondo rojo/rosa vibrante */
-  color: #FFFFFF; /* Texto blanco */
+  background: #FF0077; 
+  color: #FFFFFF; 
   padding: 12px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-family: 'Press Start 2P', cursive, monospace;
   font-size: 0.9em;
-  text-transform: uppercase; /* Texto en mayúsculas */
-  box-shadow: 0 0 10px #FF0077, 0 0 20px rgba(255, 0, 119, 0.6); /* Brillo al botón */
+  text-transform: uppercase; 
+  box-shadow: 0 0 10px #FF0077, 0 0 20px rgba(255, 0, 119, 0.6); 
   transition: all 0.3s ease;
 }
 
 button:hover {
-  background: #FF66AA; /* Rosa más claro al pasar el mouse */
-  box-shadow: 0 0 12px #FF66AA, 0 0 25px rgba(255, 102, 170, 0.8); /* Brillo más fuerte */
-  transform: translateY(-2px); /* Pequeño efecto de levantamiento */
+  background: #FF66AA; 
+  box-shadow: 0 0 12px #FF66AA, 0 0 25px rgba(255, 102, 170, 0.8); 
+  transform: translateY(-2px); 
 }
 
 #error {
-  color: #FFDDAA; /* Texto de error en un tono naranja/rosa suave */
+  color: #FFDDAA; 
   font-size: 0.9em;
   margin-top: 10px;
   text-shadow: 0 0 3px #FF66AA;
 }
 
-/* Estilos para el área de mensajes del chat (manteniendo el estilo existente pero ajustado) */
 #messages {
-  border: 2px solid #FF0077; /* Borde vibrante */
-  background: rgba(0, 0, 0, 0.7); /* Fondo oscuro semi-transparente */
+  border: 2px solid #FF0077; 
+  background: rgba(0, 0, 0, 0.7); 
   padding: 15px;
-  margin: 20px auto; /* Centrar y margen */
-  height: 350px; /* Altura un poco mayor */
+  margin: 20px auto; 
+  height: 350px; 
   overflow-y: scroll;
   text-align: left;
   border-radius: 8px;
   max-width: 600px;
   width: 90%;
-  box-shadow: 0 0 10px #FF0077, 0 0 20px rgba(255, 0, 119, 0.5); /* Brillo */
+  box-shadow: 0 0 10px #FF0077, 0 0 20px rgba(255, 0, 119, 0.5); 
 }
 
 #messages p {
     margin-bottom: 8px;
     line-height: 1.4;
-    font-size: 0.9em; /* Ajusta el tamaño de la fuente para el chat */
+    font-size: 0.9em; 
 }
 
 #messages b {
-    color: #FFDDAA; /* Nombre de usuario en un color naranja/rosa */
-    font-weight: normal; /* Para que la fuente pixelada se vea bien */
+    color: #FFDDAA; 
+    font-weight: normal; 
     text-shadow: 0 0 2px #FF0077;
 }
 
 #messages small {
-    color: #88CC88; /* Texto original en un verde más sutil */
+    color: #88CC88; 
     font-size: 0.75em;
-    display: block; /* Para que aparezca debajo */
-}
-
-/* Estilos para el input de mensaje en el chat */
-#chat-container input#msg {
-  width: calc(90% - 130px); /* Ajusta el ancho para el input y el botón */
-  margin-right: 10px;
-  display: inline-block; /* Para que el botón esté al lado */
-}
-
-/* Ajuste para el botón de enviar en el chat */
-#chat-container button {
-  width: 100px; /* Ancho fijo para el botón de enviar */
-  display: inline-block;
-}
-
-/* Pequeño ajuste para el h2 del chat para que no esté pegado */
-h2 {
-    color: #FF66AA; /* Título del chat en rosa vibrante */
-    text-shadow: 0 0 5px #FF0077;
-    margin-bottom: 20px;
+    display: block; 
 }
