@@ -11,39 +11,60 @@ translate.key = undefined;
 const app = express();
 const PORT = 3000;
 
-// Middlewares - Definición estricta de rutas de archivos estáticos
+// Middlewares - Rutas estáticas estrictas
 app.use(bodyParser.json());
-app.use(express.static("public")); // Sirve index.html y chat.html desde la raíz de public
-app.use("/css", express.static(path.join(__dirname, "public/css"))); // Sirve CSS
-app.use("/assets", express.static(path.join(__dirname, "public/assets"))); // Sirve Imagen y Audio
+app.use(express.static("public")); 
+app.use("/css", express.static(path.join(__dirname, "public/css")));
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
-// Archivos de datos (restante igual)
+// Archivos de datos
 const USERS_FILE = path.join(__dirname, "data", "users.json");
 const MESSAGES_FILE = path.join(__dirname, "data", "messages.json");
 
-// ... (Funciones readJSON, writeJSON, y rutas /login, /messages) ...
-
+// Funciones Auxiliares
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
-  return JSON.parse(fs.readFileSync(file));
+  // Usamos try/catch para manejo de errores robusto al leer JSON
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (error) {
+    console.error(`ERROR: Fallo al leer o parsear ${file}:`, error.message);
+    return [];
+  }
 }
 
 function writeJSON(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// ===================================
+// RUTA: /login - AUTENTICACIÓN CON RANGO
+// ===================================
 app.post("/login", (req, res) => {
+  // Validación estricta de la entrada
   const { username, password } = req.body;
-  const users = readJSON(USERS_FILE);
+  if (!username || !password) {
+    return res.json({ success: false, message: "Campos incompletos." });
+  }
 
+  const users = readJSON(USERS_FILE);
   const user = users.find(u => u.username === username && u.password === password);
+  
   if (user) {
-    res.json({ success: true, username: user.username });
+    // Éxito: Devolvemos el username y el rango
+    res.json({ 
+      success: true, 
+      username: user.username, 
+      rank: user.rank || 'Invitado' // Retorno estricto, si no hay rank, asigna 'Invitado'
+    });
   } else {
-    res.json({ success: false });
+    res.json({ success: false, message: "Usuario o contraseña incorrectos." });
   }
 });
 
+// ===================================
+// RUTA: /messages (GET) - OBTENER MENSAJES
+// ===================================
 app.get("/messages", (req, res) => {
   const messages = readJSON(MESSAGES_FILE);
   let lastIndex = parseInt(req.query.lastIndex) || 0;
@@ -56,13 +77,26 @@ app.get("/messages", (req, res) => {
   });
 });
 
+// ===================================
+// RUTA: /messages (POST) - ENVIAR MENSAJE CON RANGO
+// ===================================
 app.post("/messages", async (req, res) => {
-  let { username, text } = req.body;
+  // Capturamos el nuevo campo 'rank' desde el cliente
+  let { username, text, rank } = req.body; 
   const messages = readJSON(MESSAGES_FILE);
   let translatedText = text;
 
+  // Validación de contenido
+  if (!username || !text.trim()) {
+    return res.status(400).json({ success: false, message: "Faltan datos de mensaje." });
+  }
+  
+  // Lógica de Traducción
   try {
-    translatedText = await translate(text, { to: "es" });
+    // Solo traduce si el texto tiene algo significativo
+    if (text.length > 2) {
+      translatedText = await translate(text, { to: "es" });
+    }
   } catch (error) {
     console.error("❌ Error de traducción. Usando texto original:", error.message);
     translatedText = `(TRADUCCIÓN FALLIDA) ${text}`; 
@@ -72,6 +106,7 @@ app.post("/messages", async (req, res) => {
     username, 
     text, 
     translatedText, 
+    rank: rank || 'Desconocido', // Guardamos el rango. Si no viene, asignamos 'Desconocido'.
     time: new Date().toISOString() 
   };
   messages.push(newMessage);
