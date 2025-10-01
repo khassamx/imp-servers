@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Login IMP</title>
-  <link rel="stylesheet" href="/css/style.css"> </head>
+  <link rel="stylesheet" href="/css/style.css"> 
+</head>
 <body>
   
   <audio id="background-music" loop>
-    <source src="/assets/retro_theme.mp3" type="audio/mpeg"> Tu navegador no soporta el elemento de audio.
+    <source src="/assets/retro_theme.mp3" type="audio/mpeg">
+    Tu navegador no soporta el elemento de audio.
   </audio>
 
   <div class="login-box">
@@ -20,18 +22,20 @@
 
   <script>
     const audio = document.getElementById("background-music");
-    audio.play().catch(error => { console.log("Música pendiente de interacción."); });
+    audio.play().catch(error => {}); // Intenta iniciar música
 
     async function login() {
-      const username = document.getElementById("username").value.trim(); // TRIM para optimizar
+      const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
+      const errorDisplay = document.getElementById("error");
 
-      if (!username || !password) { // Validación estricta
-        document.getElementById("error").innerText = "❌ Ambos campos son obligatorios";
+      if (!username || !password) {
+        errorDisplay.innerText = "❌ Ambos campos son obligatorios";
         return;
       }
+      errorDisplay.innerText = "";
 
-      audio.play().catch(e => {}); // Se intenta desbloquear el audio con el click
+      audio.play().catch(e => {}); // Desbloquea audio con la interacción
       
       const res = await fetch("/login", {
         method: "POST",
@@ -45,11 +49,11 @@
         localStorage.setItem("username", data.username);
         window.location.href = "/chat.html";
       } else {
-        document.getElementById("error").innerText = "❌ Usuario o contraseña incorrectos";
+        errorDisplay.innerText = "❌ Usuario o contraseña incorrectos";
       }
     }
     
-    // LÓGICA PARA LA TECLA ENTER
+    // Habilitar la tecla ENTER
     document.getElementById("password").addEventListener("keypress", function(event) {
       if (event.key === 'Enter') { 
         login();
