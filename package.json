@@ -1,3 +1,26 @@
-rm package.json
-npm init -y
-nano package.json  # Asegúrate que tenga "main": "server.js" y "type": "commonjs"
+{
+  "name": "chat-privado-imp-server",
+  "version": "1.0.0",
+  "description": "Servidor y cliente para el chat privado IMP, con autenticación, chat, y subida de archivos.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js" 
+  },
+  "keywords": [
+    "chat",
+    "nodejs",
+    "express",
+    "realtime"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
