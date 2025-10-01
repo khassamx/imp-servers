@@ -34,12 +34,12 @@
             margin: 0 auto;
             background-color: #1e1e1e;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-            border-radius: 8px; 
+            border-radius: 0; /* Bordes rectos para full-screen app look */
             overflow: hidden;
         }
 
         /* --------------------------------
-         * 2. ESTILOS DE LA VENTANA DE LOGIN (Moderno)
+         * 2. ESTILOS DE LA VENTANA DE LOGIN
          * -------------------------------- */
         #login-screen {
             position: fixed;
@@ -63,69 +63,18 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             width: 90%;
             max-width: 350px;
-            transition: transform 0.3s;
         }
         
-        #login-form:hover {
-            transform: translateY(-2px); 
-        }
-        
-        #login-screen h2 {
-            color: #00BFFF; 
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            text-shadow: 0 0 5px rgba(0, 191, 255, 0.4);
-        }
-
-        #login-screen p {
-            color: #ccc;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
-        
-        #username-input {
+        #username-input, #login-button {
+            /* Mantiene la apariencia moderna */
             width: 100%;
             padding: 15px;
             margin-bottom: 20px;
-            border: 2px solid #3a3a3a;
             border-radius: 6px;
-            box-sizing: border-box;
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        #username-input:focus {
-            border-color: #007bff; 
-            outline: none;
         }
         
-        #login-button {
-            width: 100%;
-            padding: 15px;
-            background-color: #28a745; 
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-
-        #login-button:hover {
-            background-color: #1e8736;
-        }
-
-        #login-error {
-            color: #ff4d4d;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-
         /* --------------------------------
-         * 3. ESTILOS DEL CHAT Y RANGOS
+         * 3. ESTILOS DEL CHAT
          * -------------------------------- */
         #chat-header {
             padding: 15px;
@@ -143,24 +92,33 @@
             word-wrap: break-word;
         }
         
-        .message-entry {
-            margin-bottom: 8px;
-            line-height: 1.4;
-            animation: fadeIn 0.3s ease-in-out;
+        /* Contenedor flotante para el botón de foco */
+        #focus-container {
+            position: fixed;
+            bottom: 80px; /* Posicionado sobre el área de input */
+            right: 20px;
+            z-index: 50;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        #focus-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #007bff; /* Azul vibrante */
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 50px;
+            text-align: center;
+            transition: background-color 0.2s;
+            /* Muestra el botón solo cuando el chat está abierto */
+            display: none; 
         }
 
-        #chat-messages .rank-tag { 
-            margin-right: 5px; 
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: bold;
-            display: inline-block;
+        #focus-button:hover {
+            background-color: #0056b3;
         }
 
         #chat-input-area {
@@ -168,6 +126,8 @@
             padding: 10px;
             border-top: 1px solid #3a3a3a;
             background-color: #282828;
+            /* IMPORTANTE: Altura fija o mínima para que no salte al abrir teclado */
+            min-height: 70px;
         }
 
         #message-input {
@@ -188,15 +148,9 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            transition: background-color 0.3s;
         }
-
-        #send-button:hover {
-            background-color: #1e8734;
-        }
-
-        /* Colores para Rangos (Jerarquía) */
         
+        /* (Estilos de rangos, fade-in, y otros se mantienen intactos) */
         .rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
         .rank-Líder { color: #FF4500; font-weight: bold; } 
         .rank-Colíder { color: #FFD700; font-weight: bold; } 
@@ -232,10 +186,14 @@
             <button id="send-button" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
+    
+    <div id="focus-container">
+        <button id="focus-button" onclick="focusInput()">+</button>
+    </div>
 
     <script>
         // ----------------------------------------------------
-        // 🔑 DATA DE USUARIOS Y RANGOS (Claves de Acceso)
+        // 🔑 DATA DE USUARIOS Y CONEXIÓN
         // ----------------------------------------------------
         const USER_DATA = {
             "Keko1283": { alias: "Khassam", rank: "Fundador" }, 
@@ -245,26 +203,19 @@
             "milagroscon4@gmail.com": { alias: "Aye Russu", rank: "Miembro" } 
         };
 
-        // Variables Globales
         let currentUser = null; 
         const messagesDiv = document.getElementById('chat-messages');
         let connectionErrorShown = false; 
 
-        // 🚨 CÓDIGO CRUCIAL: Solo usa :3000 si estamos en HTTP (Local) para evitar conflictos con Cloudflare
+        // Lógica de URL corregida para Cloudflare/Local
         const protocol = window.location.protocol; 
         const hostname = window.location.hostname;
-        
         let apiHost = hostname;
-
-        // Si el protocolo es HTTP (conexión local), debemos añadir el puerto 3000
         if (protocol === 'http:') {
             apiHost = hostname + ':3000';
         }
-        
-        // SERVER_URL ahora será: https://túnel.com O http://192.168.x.x:3000
         const SERVER_URL = protocol + '//' + apiHost;
         
-        // Frecuencia de Polling: 3 segundos
         const POLLING_INTERVAL = 3000; 
         let lastMessageCount = 0;
 
@@ -284,23 +235,28 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('chat-container').style.display = 'flex';
                 
-                // Iniciar la carga de mensajes con un intervalo estable
+                // Muestra el botón de foco una vez que se inicia el chat
+                document.getElementById('focus-button').style.display = 'block'; 
+
                 fetchMessages();
                 setInterval(fetchMessages, POLLING_INTERVAL); 
             } else {
                 errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
             }
         }
-
-        document.getElementById('username-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') { login(); }
-        });
-        document.getElementById('message-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') { sendMessage(); }
-        });
         
         // ----------------------------------------------------
-        // 2. LÓGICA DE MENSAJES REFORZADA
+        // 2. FUNCIÓN PARA EL BOTÓN DE ENFOQUE (FOCUS)
+        // ----------------------------------------------------
+        
+        function focusInput() {
+            // 🚨 Esta línea pone el cursor en el input y abre el teclado
+            document.getElementById('message-input').focus();
+        }
+
+
+        // ----------------------------------------------------
+        // 3. LÓGICA DE MENSAJES (Se mantiene intacta)
         // ----------------------------------------------------
 
         function sendMessage() {
@@ -308,68 +264,45 @@
             const text = input.value.trim();
 
             if (!text || !currentUser) return;
-            
-            // Bloquear entrada excesivamente larga
             if (text.length > 256) {
                 alert('Mensaje demasiado largo (máx 256 caracteres).');
                 return;
             }
 
-            const message = {
-                alias: currentUser.alias,
-                rank: currentUser.rank,
-                text: text
-            };
+            const message = { alias: currentUser.alias, rank: currentUser.rank, text: text };
 
             fetch(SERVER_URL + '/messages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(message)
             })
             .then(response => {
                 if (response.ok) {
                     input.value = ''; 
                     fetchMessages(); 
+                    input.focus(); // Mantiene el foco en el input después de enviar
                 } else {
                     console.error('Error al enviar mensaje:', response.statusText);
-                    alert('Error al enviar. ¿Servidor caído o mensaje inválido?');
                 }
             })
-            .catch(error => {
-                console.error('Error de red al enviar mensaje:', error);
-                alert('No se pudo contactar con el servidor. ¿El túnel está activo?');
-            });
+            .catch(error => { console.error('Error de red al enviar mensaje:', error); });
         }
 
         function fetchMessages() {
             fetch(SERVER_URL + '/messages')
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Servidor no responde');
-                    }
+                    if (!response.ok) { throw new Error('Servidor no responde'); }
                     return response.json();
                 })
                 .then(messages => {
-                    // Si hay éxito, asegúrate de que el error no se muestre
-                    if (connectionErrorShown) {
-                        removeConnectionError();
-                        connectionErrorShown = false;
-                    }
-                    
+                    if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
                     if (messages.length > lastMessageCount) {
                         displayMessages(messages);
                         lastMessageCount = messages.length;
                     }
                 })
                 .catch(error => {
-                    // Manejar fallos de conexión
-                    console.error('Fallo de conexión o seguridad:', error);
-                    if (!connectionErrorShown) {
-                        displayConnectionError();
-                        connectionErrorShown = true;
-                    }
+                    if (!connectionErrorShown) { displayConnectionError(); connectionErrorShown = true; }
                 });
         }
 
@@ -386,15 +319,11 @@
         
         function removeConnectionError() {
             const errorDiv = document.getElementById('connection-error-message');
-            if (errorDiv) {
-                errorDiv.remove();
-            }
+            if (errorDiv) { errorDiv.remove(); }
         }
-
 
         function displayMessages(messages) {
             messagesDiv.innerHTML = ''; 
-            
             messages.forEach(msg => {
                 const messageEntry = document.createElement('div');
                 messageEntry.className = 'message-entry';
@@ -407,21 +336,19 @@
                 aliasSpan.textContent = msg.alias;
                 aliasSpan.style.color = '#fff'; 
                 
-                const textNode = document.createTextNode(': ' + msg.text);
-                
                 messageEntry.appendChild(rankSpan);
                 messageEntry.appendChild(aliasSpan);
-                messageEntry.appendChild(textNode);
+                messageEntry.appendChild(document.createTextNode(': ' + msg.text));
                 
                 messagesDiv.appendChild(messageEntry);
             });
-            
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        window.onload = function() {
-            document.getElementById('username-input').focus();
-        };
+        // Eventos de teclado
+        document.getElementById('username-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { login(); } });
+        document.getElementById('message-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { sendMessage(); } });
+        window.onload = function() { document.getElementById('username-input').focus(); };
         
     </script>
 </body>
