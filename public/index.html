@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Pintura Viva</title>
+  <title>IMP Server - Chat</title>
   
   <style>
     /*
      * --------------------------------
-     * CSS (Sin cambios, solo la estructura del código)
+     * 1. CSS BASE & ANIMACIÓN (Pintura Viva)
      * --------------------------------
      */
 
@@ -26,17 +26,20 @@
       margin: 0;
       height: 100vh;
       display: flex;
+      flex-direction: column; /* Cambiado a columna para el chat */
       justify-content: center;
       align-items: center;
       font-family: Arial, sans-serif;
-      overflow: hidden;
+      overflow: hidden; /* Ocultamos el scroll del body */
 
+      /* Fondo Animado */
       background: radial-gradient(circle at 30% 30%, #ff69b470, transparent 30%),
                   radial-gradient(circle at 70% 70%, #00ffff70, transparent 30%),
                   linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
       background-blend-mode: screen;
       background-size: 300% 300%;
       animation: movement 60s linear infinite alternate;
+      color: #fff;
     }
 
     body::before {
@@ -57,7 +60,8 @@
       z-index: -1;
     }
 
-    .login-container {
+    /* Estilos Generales para Contenedores */
+    .container {
       background: rgba(0,0,0,0.85);
       padding: 30px 40px;
       border-radius: 15px;
@@ -66,19 +70,19 @@
       box-shadow: 0 0 40px #ff69b4;
       border: 1px solid #00ffff;
       z-index: 10;
-      max-width: 350px;
+      max-width: 500px;
       width: 90%;
     }
 
-    h1 {
-        margin-bottom: 25px;
-        color: #00ffff;
+    /* Login Específico */
+    #login-container {
+        max-width: 350px;
     }
 
-    /* Ocultamos la contraseña y el botón 'submit' del formulario */
-    #password {
-        display: none;
-    }
+    h1 { margin-bottom: 25px; color: #00ffff; }
+    
+    /* Ocultamos la contraseña */
+    #password { display: none; } 
 
     input {
       width: calc(100% - 20px);
@@ -109,14 +113,53 @@
       box-shadow: 0 0 10px #ff1493;
     }
 
-    #message {
-      margin-top: 15px;
-      font-weight: bold;
+    #message { margin-top: 15px; font-weight: bold; }
+
+    /*
+     * --------------------------------
+     * 2. ESTILOS DEL CHAT
+     * --------------------------------
+     */
+    #chat-messages {
+      border: 1px solid #00ffff;
+      height: 300px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      text-align: left;
     }
+    
+    #chat-messages p {
+        margin: 5px 0;
+        font-size: 0.9em;
+    }
+    
+    #chat-messages b {
+        color: #ff69b4;
+        font-weight: bold;
+    }
+    
+    #chat-input-container {
+        display: flex;
+        gap: 10px;
+    }
+    
+    #chat-input-container input {
+        flex-grow: 1;
+        margin: 0;
+    }
+    
+    #chat-input-container button {
+        width: 100px;
+        margin: 0;
+    }
+    
   </style>
 </head>
 <body>
-  <div class="login-container">
+  
+  <div id="login-container" class="container">
     <h1>Iniciar Sesión</h1>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Usuario (Oliver, Keko.imp, etc.)" required>
@@ -126,70 +169,146 @@
     <p id="message"></p>
   </div>
 
+  <div id="chat-container" class="container" style="display:none;">
+    <h1 id="chat-title">Chat Global</h1>
+    
+    <div id="chat-messages">
+        <p><b>Sistema:</b> ¡Bienvenido al chat! Escribe algo.</p>
+    </div>
+    
+    <div id="chat-input-container">
+        <input type="text" id="msg" placeholder="Escribe tu mensaje..." required>
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+    
+    <button onclick="logout()" style="background:#b21f1f; margin-top: 20px; max-width: 150px; float: right;">Salir</button>
+  </div>
+
   <script>
+    // Variables globales
+    const loginContainer = document.getElementById("login-container");
+    const chatContainer = document.getElementById("chat-container");
     const loginForm = document.getElementById("loginForm");
     const message = document.getElementById("message");
-    const loginButton = document.getElementById("loginButton"); // Obtener el botón
-    const usernameInput = document.getElementById("username"); // Obtener el input de usuario
-
-    // Lista de usuarios válidos (simulando users.json) - todos en minúsculas
-    const VALID_USERS = ["oliver", "keko.imp", "aye_russu", "atlas"];
+    const loginButton = document.getElementById("loginButton");
+    const usernameInput = document.getElementById("username");
     
-    // Función para manejar el proceso de login
+    // Simulación de usuario logueado
+    let currentAlias = null; 
+    let chatMessagesCount = 1; // Ya tenemos 1 mensaje de sistema
+
+    // 🔑 Lista de usuarios válidos (minúsculas)
+    const VALID_USERS = ["oliver", "keko.imp", "aye_russu", "atlas"];
+
+    // --------------------- FUNCIÓN: INICIAR CHAT ---------------------
+    function startChat(alias) {
+        currentAlias = alias;
+        document.getElementById('chat-title').textContent = `Chat Global - Conectado como: ${alias}`;
+        
+        // Ocultar Login, Mostrar Chat
+        loginContainer.style.display = 'none';
+        chatContainer.style.display = 'block';
+        
+        // Simulación de carga de mensajes
+        loadMessages(); 
+        setInterval(loadMessages, 3000); // Poll cada 3 segundos
+    }
+
+    // --------------------- FUNCIÓN: MANEJAR LOGIN ---------------------
     function handleLogin(e) {
-      // Prevenir el envío por defecto del formulario (si e existe)
-      if (e && e.preventDefault) {
-        e.preventDefault();
-      }
+      if (e && e.preventDefault) e.preventDefault();
       
       const inputUsername = usernameInput.value.trim();
       const normalizedUsername = inputUsername.toLowerCase(); 
 
-      // Deshabilitar botón y campo mientras se procesa
       loginButton.disabled = true;
       usernameInput.disabled = true;
 
-      // 🔍 Verificación
       if(VALID_USERS.includes(normalizedUsername)){
         
         // 1. Mostrar estado "Verificando..."
         message.textContent = "🔄 Verificando...";
-        message.style.color = "#00ffff"; // Color cian/azul claro
+        message.style.color = "#00ffff"; 
         
-        // 2. Establecer el retraso (simula la carga del chat)
+        // 2. Simular el retraso de verificación
         setTimeout(() => {
           
-          // 3. Mostrar estado "Bienvenido" brevemente
-          message.textContent = `✅ Usuario perfecto. Bienvenido, ${inputUsername}!`;
+          // 3. Simulación: El alias es el nombre que usó, mayúsculas y minúsculas incluidas.
+          message.textContent = `✅ Usuario perfecto. Iniciando chat...`;
           message.style.color = "lightgreen";
           
-          // Guardar el usuario y redirigir
-          localStorage.setItem('currentUser', inputUsername); 
-          window.location.href = 'chat.html'; // ¡Redirección final!
+          // Iniciar el chat con el nombre ingresado
+          startChat(inputUsername); 
           
-        }, 1500); // 1.5 segundos de retraso
+        }, 1500); 
         
       } else {
-        // En caso de error, mostrar el mensaje y re-habilitar el formulario
+        // En caso de error
         message.textContent = "❌ Usuario no registrado. Intenta de nuevo.";
         message.style.color = "red";
-        
-        // Re-habilitar
         loginButton.disabled = false;
         usernameInput.disabled = false;
-        usernameInput.focus(); // Pone el foco de nuevo en el campo
+        usernameInput.focus();
       }
     }
+    
+    // --------------------- FUNCIONES SIMULADAS DEL CHAT ---------------------
+    
+    function loadMessages() {
+        // En una app real, aquí harías fetch a la ruta /messages
+        // Por ahora, simulamos que no hay mensajes nuevos para evitar la complejidad.
+    }
+    
+    function sendMessage() {
+        const input = document.getElementById('msg');
+        const text = input.value.trim();
+        const chatBox = document.getElementById('chat-messages');
 
+        if (text === '') return;
 
-    // 1. Asociar la función al envío del formulario (botón "Entrar")
+        // 1. Simulación de envío y traducción (solo en el frontend)
+        const translated = `(traducido) ${text.toUpperCase()}`;
+        
+        // 2. Añadir el mensaje al chat
+        const newMessage = document.createElement('p');
+        newMessage.innerHTML = `<b>${currentAlias}</b>: ${translated} <small>[${text}]</small>`;
+        chatBox.appendChild(newMessage);
+        
+        // 3. Limpiar el input y hacer scroll
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // En una app real, aquí harías fetch a la ruta POST /messages
+    }
+    
+    function logout() {
+        currentAlias = null;
+        localStorage.removeItem('currentUser');
+        chatContainer.style.display = 'none';
+        loginContainer.style.display = 'block';
+        loginButton.disabled = false;
+        usernameInput.disabled = false;
+        usernameInput.value = '';
+        message.textContent = '';
+        usernameInput.focus();
+    }
+
+    // --------------------- LISTENERS ---------------------
     loginForm.addEventListener("submit", handleLogin);
     
-    // 2. Asociar la función a la tecla Enter en el campo de usuario
+    // Manejar la tecla Enter en el campo de usuario
     usernameInput.addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
-            event.preventDefault(); // Detener el submit por defecto
+            event.preventDefault();
             handleLogin(event);
+        }
+    });
+    
+    // Manejar la tecla Enter en el campo de mensaje
+    document.getElementById("msg").addEventListener("keypress", function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendMessage();
         }
     });
 
