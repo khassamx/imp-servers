@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Login IMP</title>
-  <link rel="stylesheet" href="style.css"> 
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="login-box">
@@ -16,6 +16,7 @@
 
   <script>
     async function login() {
+      // (Mismo código de login aquí...)
       let username = document.getElementById("username").value;
       let password = document.getElementById("password").value;
 
@@ -27,13 +28,22 @@
 
       let data = await res.json();
       if (data.success) {
-        // Guardamos el usuario y redirigimos al chat
         localStorage.setItem("username", data.username);
         window.location.href = "/chat.html";
       } else {
         document.getElementById("error").innerText = "❌ Usuario o contraseña incorrectos";
       }
     }
+    
+    // --- LÓGICA PARA LA TECLA ENTER ---
+    document.getElementById("password").addEventListener("keypress", function(event) {
+      if (event.key === 'Enter') { 
+        login();
+      }
+    });
+    // Opcional: si quieres que funcione en cualquier parte de la página, usa el listener global que te di arriba.
+    // Usar solo el campo de password es más limpio.
+    
   </script>
 </body>
 </html>
