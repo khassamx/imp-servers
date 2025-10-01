@@ -16,7 +16,6 @@ let messages = [];
 let users = {};
 let typingStatus = {};
 
-// --- Configuración de Multer para la subida de archivos ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, UPLOADS_DIR); 
@@ -34,7 +33,6 @@ const upload = multer({
 app.use(express.json()); 
 app.use(express.static(path.join(__dirname, 'public'))); 
 
-// --- CORS ---
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -42,7 +40,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- Utilidades de Datos ---
 async function loadData() {
     try {
         const messagesData = await fs.readFile(MESSAGES_FILE, 'utf8');
@@ -197,15 +194,14 @@ loadData().then(() => {
 
 ---
 
-## 🚀 Siguientes Pasos
+## ✅ Siguientes Pasos
 
-1.  **Reemplaza el contenido completo** de tu `server.js` con el código limpio que acabas de ver.
-2.  **Guarda** con `CTRL + O` y sal con `CTRL + X` en `nano`.
-3.  Vuelve a ejecutar:
-    ```bash
-    node server.js
-    ```
+1.  **Abre `server.js`** en Termux con `nano server.js`.
+2.  **Borra todo el contenido** que tiene actualmente.
+3.  **Pega el código limpio** que te acabo de enviar.
+4.  **Guarda y Sal:** (`CTRL + O`, `Enter`, `CTRL + X`).
 
-Esto debería eliminar el **`SyntaxError`**. Una vez que el servidor esté corriendo, solo te faltaría el túnel de Cloudflare para que esté en línea (si aún no lo está).
+Una vez que el archivo esté limpio, ¡por favor, inténtalo de nuevo! Si el servidor arranca correctamente, ya podremos concentrarnos en el túnel de Cloudflare.
 
-¿El servidor levanta correctamente ahora?
+```bash
+node server.js
