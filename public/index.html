@@ -3,82 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Privado IMP Server</title>
+    <title>IMP Server Chat Unificado</title>
 
-    <!-- METATAGS PARA ASPECTO DE APP -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e1e1e"> 
 
-    <!-- ENLACE A LOS ESTILOS ESPECÍFICOS DEL CHAT -->
     <link rel="stylesheet" href="style-chat.css"> 
+    <script src="js/app.js"></script> 
 </head>
 <body>
 
-    <!-- Contenedor Principal del Chat -->
-    <div id="chat-container">
+    <div id="login-view" class="auth-view" style="display: none;">
+        <div id="login-form">
+            <h2>Ingresar al Chat IMP Server</h2>
+            <p>⚠️ El **Usuario** es la **Clave Secreta** para acceder.</p>
+            <input type="text" id="username-input" placeholder="Ingresa tu Clave Secreta/Usuario">
+            <input type="password" id="password-input" placeholder="Contraseña/Clave Secreta">
+            <button id="login-button" onclick="login()">Acceder</button>
+            <div id="login-error" class="error-message"></div>
+            
+            <hr style="margin: 20px 0; border-color: #444;">
+            <p>¿No tienes cuenta? <a href="#" onclick="showView('register')">Crear Cuenta</a></p>
+        </div>
+    </div>
+
+
+    <div id="register-view" class="auth-view" style="display: none;">
+        <div id="register-form">
+            <h2>Crear Cuenta IMP Server</h2>
+
+            <input type="text" id="reg-name-input" placeholder="Nombre Real (Privado)" required>
+            <input type="text" id="reg-username-input" placeholder="Usuario" required>
+            <input type="password" id="reg-password-input" placeholder="Contraseña/Clave Secreta" required>
+            <input type="text" id="reg-alias-input" placeholder="Nombre o Apodo (visible en el grupo)" required>
+            <input type="text" id="reg-country-input" placeholder="País de Origen" required>
+            <input type="tel" id="reg-whatsapp-input" placeholder="Número WhatsApp" required>
+            <input type="email" id="reg-email-input" placeholder="Correo Electrónico (Privado)" required>
+
+            <button id="register-button" onclick="register()">Registrarse</button>
+            <div id="register-error" class="error-message"></div>
+
+            <hr style="margin: 20px 0; border-color: #444;">
+            <p>¿Ya tienes cuenta? <a href="#" onclick="showView('login')">Volver al Login</a></p>
+        </div>
+    </div>
+
+    
+    <div id="chat-view" style="display:none;">
         <div id="chat-header">
-            <span style="visibility:hidden;">Salir</span>
             Chat Privado IMP Server - <span id="current-alias"></span>
             <button id="logout-button" onclick="logout()">Salir</button>
         </div>
-        
-        <!-- Área de Mensajes -->
+
         <div id="chat-messages">
-            <!-- Los mensajes se insertarán aquí -->
-        </div>
-        
-        <!-- Indicador de 'Está Escribiendo' -->
+            </div>
+
         <div id="typing-indicator">
-            <!-- El mensaje de tecleo va aquí -->
-        </div>
-        
-        <!-- Área de Input y Envío -->
+            </div>
+
         <div id="chat-input-area">
             <input type="file" id="file-input" style="display:none;" onchange="handleFileSelection()">
             <button id="attach-button" onclick="document.getElementById('file-input').click()">📎</button>
-            
+
             <input type="text" id="message-input" placeholder="Escribe tu mensaje o agrega un archivo...">
             <button id="send-button" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
-    
-    <!-- Botón Flotante para el Foco (Móvil) -->
+
     <div id="focus-container">
         <button id="focus-button" onclick="focusInput()">+</button>
     </div>
 
-    <!-- ENLACE AL ARCHIVO DE LÓGICA GENERAL -->
-    <script src="app.js"></script>
-    
-    <script>
-        // Inicializar chat al cargar la página
-        window.onload = function() {
-            // Chequeamos si la sesión está activa, si no, redirigimos a login.html
-            if (!currentUser) {
-                window.location.href = '/login.html';
-                return;
-            }
-            
-            // Si la sesión es activa, inicializamos la UI y el polling
-            document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
-            
-            // Evento de tecleo modificado para enviar la señal
-            document.getElementById('message-input').addEventListener('keypress', function(e) { 
-                if (e.key !== 'Enter') {
-                    sendTypingSignal();
-                } else {
-                    sendMessage(); 
-                }
-            });
-            
-            requestNotificationPermission();
-            focusInput();
-            
-            fetchMessages();
-            setInterval(fetchMessages, POLLING_INTERVAL); 
-        };
-    </script>
 </body>
 </html>
