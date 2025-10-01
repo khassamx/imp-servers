@@ -20,22 +20,21 @@
     let messagesContainer = document.getElementById("messages");
 
     async function loadMessages() {
-      // 1. Pedir mensajes nuevos (desde el conteo actual)
+      // Pedir mensajes nuevos (desde el conteo actual)
       let res = await fetch(`/messages?lastIndex=${currentMessageCount}`);
       let data = await res.json();
       
       const newMessages = data.messages;
 
-      // 2. Si hay mensajes nuevos, añadirlos
+      // Si hay mensajes nuevos, añadirlos
       if (newMessages.length > 0) {
           const html = newMessages.map(m => 
               `<p><b>${m.username}</b>: ${m.translatedText} <small>[${m.text}]</small></p>`
           ).join("");
           
-          // Agrega solo el HTML de los mensajes nuevos al contenedor
           messagesContainer.innerHTML += html;
           
-          // 3. Actualizar el conteo y hacer scroll
+          // Actualizar el conteo y hacer scroll
           currentMessageCount = data.totalCount;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
@@ -43,7 +42,7 @@
 
     async function sendMessage() {
       let text = document.getElementById("msg").value;
-      if (!text.trim()) return; // Usamos trim() para evitar mensajes solo con espacios
+      if (!text.trim()) return;
 
       await fetch("/messages", {
         method: "POST",
@@ -52,7 +51,6 @@
       });
 
       document.getElementById("msg").value = "";
-      // Cargamos mensajes inmediatamente después de enviar para ver el nuestro
       loadMessages(); 
     }
 
