@@ -1,32 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Chat IMP</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+  <link rel="stylesheet" href="/css/style.css"> </head>
 <body>
+  
+  <audio id="background-music" loop>
+    <source src="/assets/retro_theme.mp3" type="audio/mpeg"> </audio>
+
   <h2>💀 Chat IMP</h2>
   <div id="messages"></div>
-  <input type="text" id="msg" placeholder="Escribe un mensaje...">
+  <input type="text" id="msg" placeholder="Escribe un mensaje..." autocomplete="off">
   <button onclick="sendMessage()">Enviar</button>
 
   <script>
     let username = localStorage.getItem("username");
     if (!username) window.location.href = "/";
     
-    // Almacena el número de mensajes que ya tenemos
     let currentMessageCount = 0; 
     let messagesContainer = document.getElementById("messages");
 
+    // LÓGICA DE MÚSICA CONTINUA
+    const audio = document.getElementById("background-music");
+    const storedPosition = localStorage.getItem("musicPosition");
+
+    if (storedPosition) {
+        audio.currentTime = parseFloat(storedPosition);
+        audio.play().catch(error => { console.log("Música lista, pendiente de interacción."); });
+        localStorage.removeItem("musicPosition");
+    } else {
+        audio.play().catch(e => {});
+    }
+
+    // LÓGICA DE CARGA Y ENVÍO DEL CHAT (restante igual)
     async function loadMessages() {
-      // Pedir mensajes nuevos (desde el conteo actual)
       let res = await fetch(`/messages?lastIndex=${currentMessageCount}`);
       let data = await res.json();
       
       const newMessages = data.messages;
 
-      // Si hay mensajes nuevos, añadirlos
       if (newMessages.length > 0) {
           const html = newMessages.map(m => 
               `<p><b>${m.username}</b>: ${m.translatedText} <small>[${m.text}]</small></p>`
@@ -34,15 +47,14 @@
           
           messagesContainer.innerHTML += html;
           
-          // Actualizar el conteo y hacer scroll
           currentMessageCount = data.totalCount;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
     }
 
     async function sendMessage() {
-      let text = document.getElementById("msg").value;
-      if (!text.trim()) return;
+      let text = document.getElementById("msg").value.trim(); // TRIM para optimizar
+      if (!text) return;
 
       await fetch("/messages", {
         method: "POST",
@@ -53,10 +65,15 @@
       document.getElementById("msg").value = "";
       loadMessages(); 
     }
+    
+    // LÓGICA PARA LA TECLA ENTER en el campo de mensaje
+    document.getElementById("msg").addEventListener("keypress", function(event) {
+      if (event.key === 'Enter') { 
+        sendMessage();
+      }
+    });
 
-    // Iniciar el chequeo periódico de mensajes nuevos
     setInterval(loadMessages, 2000); 
-    // Cargar los mensajes iniciales al entrar
     loadMessages();
   </script>
 </body>
