@@ -34,12 +34,12 @@
             margin: 0 auto;
             background-color: #1e1e1e;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-            border-radius: 8px; /* Bordes suaves */
+            border-radius: 8px; 
             overflow: hidden;
         }
 
         /* --------------------------------
-         * 2. ESTILOS DE LA VENTANA DE LOGIN (CSS MODERNIZADO)
+         * 2. ESTILOS DE LA VENTANA DE LOGIN (Moderno)
          * -------------------------------- */
         #login-screen {
             position: fixed;
@@ -47,7 +47,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #121212; /* Fondo de la app */
+            background-color: #121212; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -67,11 +67,11 @@
         }
         
         #login-form:hover {
-            transform: translateY(-2px); /* Efecto 3D al pasar el mouse/tocar */
+            transform: translateY(-2px); 
         }
         
         #login-screen h2 {
-            color: #00BFFF; /* Color de Atlas, para resaltar */
+            color: #00BFFF; 
             margin-bottom: 25px;
             font-size: 1.8em;
             text-shadow: 0 0 5px rgba(0, 191, 255, 0.4);
@@ -97,14 +97,14 @@
         }
 
         #username-input:focus {
-            border-color: #007bff; /* Resalte al enfocarse */
+            border-color: #007bff; 
             outline: none;
         }
         
         #login-button {
             width: 100%;
             padding: 15px;
-            background-color: #28a745; /* Verde fuerte */
+            background-color: #28a745; 
             color: white;
             border: none;
             border-radius: 6px;
@@ -197,32 +197,13 @@
 
         /* Colores para Rangos (Jerarquía) */
         
-        .rank-Fundador { 
-            color: #FF00FF; 
-            font-weight: bold; 
-            text-shadow: 0 0 5px #FF00FF; 
-        } 
-        
-        .rank-Líder { 
-            color: #FF4500; 
-            font-weight: bold; 
-        } 
-        
-        .rank-Colíder { 
-            color: #FFD700; 
-            font-weight: bold; 
-        } 
-        
-        .rank-Atlas { 
-            color: #00BFFF; 
-            font-weight: bold; 
-        } 
-        
-        .rank-Miembro { 
-            color: #8A2BE2; 
-        } 
-        
+        .rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
+        .rank-Líder { color: #FF4500; font-weight: bold; } 
+        .rank-Colíder { color: #FFD700; font-weight: bold; } 
+        .rank-Atlas { color: #00BFFF; font-weight: bold; } 
+        .rank-Miembro { color: #8A2BE2; } 
         .rank-System { color: #999; }
+        .connection-error { color: #ff4d4d; font-weight: bold; padding: 10px 0; text-align: center; }
 
     </style>
 </head>
@@ -266,8 +247,17 @@
 
         // Variables Globales
         let currentUser = null; 
-        const SERVER_URL = 'http://' + window.location.hostname + ':3000';
         const messagesDiv = document.getElementById('chat-messages');
+        let connectionErrorShown = false; // Bandera para mostrar el error una vez
+
+        // 🚨 LÍNEA CRUCIAL: Determina si usar HTTPS (Cloudflare) o HTTP (Local)
+        const protocol = window.location.protocol; // Será "http:" o "https:"
+        const SERVER_URL = protocol + '//' + window.location.hostname + ':3000';
+        
+        // Frecuencia de Polling: 3 segundos
+        const POLLING_INTERVAL = 3000; 
+        let lastMessageCount = 0;
+
 
         // ----------------------------------------------------
         // 1. LÓGICA DE INICIO DE SESIÓN
@@ -284,28 +274,23 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('chat-container').style.display = 'flex';
                 
-                // Cargar mensajes y configurar el polling
+                // Iniciar la carga de mensajes con un intervalo estable
                 fetchMessages();
-                setInterval(fetchMessages, 3000); // Actualiza cada 3 segundos
+                setInterval(fetchMessages, POLLING_INTERVAL); 
             } else {
                 errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
             }
         }
 
-        // Evento para enviar mensaje con la tecla ENTER
         document.getElementById('username-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                login();
-            }
+            if (e.key === 'Enter') { login(); }
         });
         document.getElementById('message-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') { sendMessage(); }
         });
         
         // ----------------------------------------------------
-        // 2. LÓGICA DE MENSAJES
+        // 2. LÓGICA DE MENSAJES REFORZADA
         // ----------------------------------------------------
 
         function sendMessage() {
@@ -313,6 +298,12 @@
             const text = input.value.trim();
 
             if (!text || !currentUser) return;
+            
+            // Bloquear entrada excesivamente larga
+            if (text.length > 256) {
+                alert('Mensaje demasiado largo (máx 256 caracteres).');
+                return;
+            }
 
             const message = {
                 alias: currentUser.alias,
@@ -333,29 +324,63 @@
                     fetchMessages(); 
                 } else {
                     console.error('Error al enviar mensaje:', response.statusText);
+                    alert('Error al enviar. ¿Servidor caído o mensaje inválido?');
                 }
             })
-            .catch(error => console.error('Error de red al enviar mensaje:', error));
+            .catch(error => {
+                console.error('Error de red al enviar mensaje:', error);
+                alert('No se pudo contactar con el servidor. ¿El túnel está activo?');
+            });
         }
-
-        let lastMessageCount = 0;
 
         function fetchMessages() {
             fetch(SERVER_URL + '/messages')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Servidor no responde');
+                    }
+                    return response.json();
+                })
                 .then(messages => {
+                    // Si hay éxito, asegúrate de que el error no se muestre
+                    if (connectionErrorShown) {
+                        removeConnectionError();
+                        connectionErrorShown = false;
+                    }
+                    
                     if (messages.length > lastMessageCount) {
                         displayMessages(messages);
                         lastMessageCount = messages.length;
                     }
                 })
                 .catch(error => {
-                    console.error('Error al cargar mensajes:', error);
-                    if (messagesDiv.innerHTML.indexOf('ERROR DE CONEXIÓN') === -1) {
-                         messagesDiv.innerHTML += '<div style="color:red; font-weight:bold;">❌ ERROR DE CONEXIÓN CON EL SERVIDOR.</div>';
+                    // Manejar fallos de conexión
+                    console.error('Fallo de conexión o seguridad:', error);
+                    if (!connectionErrorShown) {
+                        displayConnectionError();
+                        connectionErrorShown = true;
                     }
                 });
         }
+
+        function displayConnectionError() {
+            if (!document.getElementById('connection-error-message')) {
+                const errorDiv = document.createElement('div');
+                errorDiv.id = 'connection-error-message';
+                errorDiv.className = 'connection-error';
+                errorDiv.textContent = '❌ ERROR DE CONEXIÓN CON EL SERVIDOR. Revisa el túnel Cloudflare.';
+                messagesDiv.appendChild(errorDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+            }
+        }
+        
+        function removeConnectionError() {
+            const errorDiv = document.getElementById('connection-error-message');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
 
         function displayMessages(messages) {
             messagesDiv.innerHTML = ''; 
@@ -370,7 +395,7 @@
                 
                 const aliasSpan = document.createElement('b');
                 aliasSpan.textContent = msg.alias;
-                aliasSpan.style.color = '#fff'; // Asegurar alias blanco
+                aliasSpan.style.color = '#fff'; 
                 
                 const textNode = document.createTextNode(': ' + msg.text);
                 
