@@ -12,7 +12,7 @@
 
     <style>
         /* --------------------------------
-         * 1. ESTILOS BASE Y LAYOUT (Mobile-Friendly)
+         * 1. ESTILOS BASE Y LAYOUT
          * -------------------------------- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -96,7 +96,6 @@
             line-height: 1.4;
         }
 
-        /* Contenedor flotante para el botón de foco */
         #focus-container {
             position: fixed;
             bottom: 80px; 
@@ -129,7 +128,7 @@
 
         #attach-button {
             padding: 12px 15px;
-            background-color: #007bff; /* Azul */
+            background-color: #007bff; 
             color: white;
             border: none;
             border-radius: 6px;
@@ -167,8 +166,9 @@
             margin-bottom: 5px;
             border-radius: 5px;
         }
-
+        
         /* Colores de Rangos */
+        .rank-tag { margin-right: 5px; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: inline-block;}
         .rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
         .rank-Líder { color: #FF4500; font-weight: bold; } 
         .rank-Colíder { color: #FFD700; font-weight: bold; } 
@@ -214,7 +214,7 @@
 
     <script>
         // ----------------------------------------------------
-        // 🔑 DATA DE USUARIOS Y CONEXIÓN
+        // 🔑 DATA DE USUARIOS Y PERMISOS
         // ----------------------------------------------------
         const USER_DATA = {
             "Keko1283": { alias: "Khassam", rank: "Fundador" }, 
@@ -224,12 +224,15 @@
             "milagroscon4@gmail.com": { alias: "Aye Russu", rank: "Miembro" } 
         };
 
+        // 🚨 RANGOS CON PERMISO PARA ELIMINAR MENSAJES
+        const ADMIN_RANKS = ["Fundador", "Líder"];
+
         let currentUser = null; 
         const messagesDiv = document.getElementById('chat-messages');
         let connectionErrorShown = false; 
-        let selectedFile = null; // Variable para almacenar el archivo seleccionado
+        let selectedFile = null; 
 
-        // Lógica de URL corregida para Cloudflare/Local (Sin puerto 3000 en HTTPS)
+        // Lógica de URL corregida (Sin puerto 3000 en HTTPS)
         const protocol = window.location.protocol; 
         const hostname = window.location.hostname;
         let apiHost = hostname;
@@ -258,7 +261,6 @@
                 document.getElementById('chat-container').style.display = 'flex';
                 document.getElementById('focus-button').style.display = 'block'; 
                 
-                // Solicitar permiso de Notificación al iniciar
                 requestNotificationPermission();
 
                 fetchMessages();
@@ -274,13 +276,12 @@
             }
         }
 
-        // Función para el botón de enfoque (Móvil)
         function focusInput() {
             document.getElementById('message-input').focus();
         }
         
         // ----------------------------------------------------
-        // 2. MANEJO DE ARCHIVOS Y SUBIDA
+        // 2. LÓGICA DE ARCHIVOS Y ADMINISTRACIÓN
         // ----------------------------------------------------
 
         function handleFileSelection() {
@@ -289,7 +290,6 @@
             
             if (selectedFile) {
                 const messageInput = document.getElementById('message-input');
-                // Muestra un mensaje temporal en el input de texto
                 messageInput.placeholder = `Archivo listo: ${selectedFile.name}. Presiona Enviar.`;
                 messageInput.value = ''; 
                 focusInput();
@@ -300,7 +300,6 @@
             const formData = new FormData();
             formData.append('file', selectedFile);
 
-            // Subir el archivo al endpoint /upload
             const uploadResponse = await fetch(SERVER_URL + '/upload', {
                 method: 'POST',
                 body: formData
@@ -313,15 +312,37 @@
 
             const uploadData = await uploadResponse.json();
             
-            // Adjuntar los datos del archivo al mensaje
             messageData.fileUrl = uploadData.fileUrl;
             messageData.originalName = uploadData.originalName;
-            messageData.text = document.getElementById('message-input').value.trim() || null; // Pie de foto/video opcional
+            messageData.text = document.getElementById('message-input').value.trim() || null;
             
-            // Resetear la selección
             selectedFile = null;
             document.getElementById('file-input').value = ''; 
             document.getElementById('message-input').placeholder = 'Escribe tu mensaje o agrega un archivo...';
+        }
+
+        // 🚨 FUNCIÓN PARA ELIMINAR MENSAJES
+        async function deleteMessage(messageId) {
+            if (!confirm("¿Estás seguro de que quieres eliminar este mensaje?")) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/messages/${messageId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    console.log(`Mensaje ${messageId} eliminado correctamente.`);
+                    fetchMessages(); // Recargar el chat
+                } else {
+                    console.error('Error al eliminar mensaje:', response.statusText);
+                    alert('No se pudo eliminar el mensaje.');
+                }
+            } catch (error) {
+                console.error('Error de red al eliminar:', error);
+                alert('No se pudo conectar con el servidor para eliminar el mensaje.');
+            }
         }
 
 
@@ -347,11 +368,9 @@
             
             try {
                 if (selectedFile) {
-                    // Primero sube el archivo si existe
                     await uploadFileAndSendMessage(messageData);
                 }
 
-                // Luego envía el mensaje (con o sin fileUrl)
                 const response = await fetch(SERVER_URL + '/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -382,7 +401,6 @@
                     if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
                     
                     if (messages.length > lastMessageCount) {
-                        // Dispara la notificación para el último mensaje nuevo
                         const newMessage = messages[messages.length - 1]; 
                         displaySystemNotification(newMessage); 
                         
@@ -396,7 +414,6 @@
         }
 
         function displaySystemNotification(message) {
-            // Dispara la notificación solo si el usuario dio permiso y el chat NO está activo
             if (Notification.permission === 'granted' && !document.hasFocus()) {
                 const options = {
                     body: message.text || (message.fileUrl ? 'Archivo adjunto' : 'Mensaje nuevo'),
@@ -408,16 +425,23 @@
         }
         
         // ----------------------------------------------------
-        // 4. LÓGICA DE RENDERIZADO (Mostrar Medios)
+        // 4. LÓGICA DE RENDERIZADO (Mostrar Medios y Botones de Admin)
         // ----------------------------------------------------
         
         function displayMessages(messages) {
             messagesDiv.innerHTML = ''; 
+            // Comprueba si el usuario conectado tiene un rango de administrador
+            const isCurrentUserAdmin = ADMIN_RANKS.includes(currentUser.rank); 
+            
             messages.forEach(msg => {
                 const messageEntry = document.createElement('div');
                 messageEntry.className = 'message-entry';
                 
-                // 1. Mostrar Rango y Alias
+                const headerContainer = document.createElement('div');
+                headerContainer.style.display = 'flex';
+                headerContainer.style.alignItems = 'center';
+                
+                // 1. Rango y Alias
                 const rankSpan = document.createElement('span');
                 rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
                 rankSpan.textContent = '[' + msg.rank + ']';
@@ -425,11 +449,31 @@
                 const aliasSpan = document.createElement('b');
                 aliasSpan.textContent = msg.alias;
                 aliasSpan.style.color = '#fff'; 
+                aliasSpan.style.marginLeft = '5px';
                 
-                messageEntry.appendChild(rankSpan);
-                messageEntry.appendChild(aliasSpan);
+                headerContainer.appendChild(rankSpan);
+                headerContainer.appendChild(aliasSpan);
                 
-                // 2. MANEJO DE ARCHIVOS
+                // 🚨 BOTÓN DE ELIMINAR (Solo para Admins)
+                if (isCurrentUserAdmin && msg.id) {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = '❌';
+                    deleteButton.title = 'Eliminar mensaje';
+                    deleteButton.onclick = () => deleteMessage(msg.id);
+                    deleteButton.style.marginLeft = 'auto'; 
+                    deleteButton.style.background = 'none';
+                    deleteButton.style.border = 'none';
+                    deleteButton.style.color = '#ff4d4d';
+                    deleteButton.style.cursor = 'pointer';
+                    
+                    headerContainer.appendChild(deleteButton);
+                }
+                
+                messageEntry.appendChild(headerContainer);
+
+                // 2. Contenido del Mensaje
+                const contentContainer = document.createElement('span');
+                
                 if (msg.fileUrl) {
                     const mediaContainer = document.createElement('div');
                     mediaContainer.className = 'media-container';
@@ -454,7 +498,6 @@
                         mediaContainer.appendChild(video);
                     }
                     
-                    // Enlace de descarga para cualquier archivo
                     const downloadLink = document.createElement('a');
                     downloadLink.href = msg.fileUrl;
                     downloadLink.download = msg.originalName || 'archivo_descargado';
@@ -463,14 +506,17 @@
                     downloadLink.style.display = 'block';
                     
                     mediaContainer.appendChild(downloadLink);
-                    messageEntry.appendChild(mediaContainer);
+                    contentContainer.appendChild(mediaContainer);
                 }
 
-                // 3. Mostrar Texto (pie de foto o mensaje normal)
                 if (msg.text) {
-                     messageEntry.appendChild(document.createTextNode(': ' + msg.text));
+                    const textNode = document.createElement('div');
+                    textNode.textContent = msg.text;
+                    textNode.style.marginLeft = '5px';
+                    contentContainer.appendChild(textNode);
                 }
                 
+                messageEntry.appendChild(contentContainer);
                 messagesDiv.appendChild(messageEntry);
             });
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
