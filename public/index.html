@@ -248,11 +248,21 @@
         // Variables Globales
         let currentUser = null; 
         const messagesDiv = document.getElementById('chat-messages');
-        let connectionErrorShown = false; // Bandera para mostrar el error una vez
+        let connectionErrorShown = false; 
 
-        // 🚨 LÍNEA CRUCIAL: Determina si usar HTTPS (Cloudflare) o HTTP (Local)
-        const protocol = window.location.protocol; // Será "http:" o "https:"
-        const SERVER_URL = protocol + '//' + window.location.hostname + ':3000';
+        // 🚨 CÓDIGO CRUCIAL: Solo usa :3000 si estamos en HTTP (Local) para evitar conflictos con Cloudflare
+        const protocol = window.location.protocol; 
+        const hostname = window.location.hostname;
+        
+        let apiHost = hostname;
+
+        // Si el protocolo es HTTP (conexión local), debemos añadir el puerto 3000
+        if (protocol === 'http:') {
+            apiHost = hostname + ':3000';
+        }
+        
+        // SERVER_URL ahora será: https://túnel.com O http://192.168.x.x:3000
+        const SERVER_URL = protocol + '//' + apiHost;
         
         // Frecuencia de Polling: 3 segundos
         const POLLING_INTERVAL = 3000; 
