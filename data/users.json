@@ -1,7 +1,14 @@
 [
-  { "username": "keko", "password": "1283", "rank": "Admin" },
-  { "username": "Aye_Russu", "password": "hiro2025", "rank": "Admin" },
+  /* ================================== */
+  /* ========= RANGO: ADMIN (3) - Ordenado Alfabéticamente ========= */
+  /* ================================== */
   { "username": "Atlas", "password": "293749292", "rank": "Admin" },
+  { "username": "Aye_Russu", "password": "hiro2025", "rank": "Admin" },
+  { "username": "Keko.imp", "password": "Gta2045", "rank": "Admin" },
+
+  /* ================================== */
+  /* ======== RANGO: MIEMBRO (97) - Ordenado Numéricamente ======= */
+  /* ================================== */
   { "username": "Usuario_004", "password": "pass_004", "rank": "Miembro" },
   { "username": "Usuario_005", "password": "pass_005", "rank": "Miembro" },
   { "username": "Usuario_006", "password": "pass_006", "rank": "Miembro" },
