@@ -44,12 +44,14 @@
 
     h1 { margin-bottom: 25px; color: #00ffff; }
     #password { display: none; } /* Ocultar Contraseña */
+    #loginButton { display: none; } /* ¡OCULTAR BOTÓN ENTRAR! */
 
     input {
       width: calc(100% - 20px); padding: 10px; margin: 10px 0; border: none;
       border-radius: 8px; background: #333; color: #fff; font-size: 1em;
     }
 
+    /* Estilos del chat (mantener, ya que el login no tiene botón) */
     button {
       width: 100%; padding: 10px; margin-top: 10px; background: #ff69b4; border: none;
       border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s;
@@ -114,18 +116,17 @@
     // Variables y Mapeo de RANGOS (JS)
     const loginContainer = document.getElementById("login-container");
     const chatContainer = document.getElementById("chat-container");
-    const loginForm = document.getElementById("loginForm");
     const message = document.getElementById("message");
-    const loginButton = document.getElementById("loginButton");
     const usernameInput = document.getElementById("username");
     const chatBox = document.getElementById('chat-messages');
     const msgInput = document.getElementById('msg');
     
     let currentAlias = null; 
     let currentRank = null; 
+    let isProcessingLogin = false; // Bandera para evitar múltiples intentos de login
+    let loginTimeoutId = null; // ID del temporizador para el retraso
 
-    // 🔑 DATA DE USUARIOS Y RANGOS (Control total desde Index.html)
-    // La clave debe ser siempre en minúsculas para la verificación insensible a mayúsculas.
+    // 🔑 DATA DE USUARIOS Y RANGOS
     const USER_DATA = {
         "oliver": { alias: "Oliver", rank: "Admin" },
         "keko.imp": { alias: "Keko.IMP", rank: "Moderador" },
@@ -152,7 +153,6 @@
         currentAlias = userData.alias;
         currentRank = userData.rank;
         
-        // Mostrar alias y rango en el título
         document.getElementById('chat-title').innerHTML = `Chat Global - Conectado como: <span class="rank-${currentRank.replace(/\s/g, '')}">${currentAlias}</span>`;
         
         // Transición: Ocultar Login, Mostrar Chat
@@ -160,32 +160,45 @@
         chatContainer.style.display = 'block';
         
         msgInput.focus();
+        isProcessingLogin = false; // Resetear la bandera
         
         // Mensaje de Bienvenida del Sistema
         addMessage("Sistema", `¡Bienvenido, ${currentAlias}! Tu rango es ${currentRank}.`, 'System');
     }
 
-    // --------------------- FUNCIÓN: MANEJAR LOGIN ---------------------
-    function handleLogin(e) {
-      if (e && e.preventDefault) e.preventDefault();
-      
+    // --------------------- FUNCIÓN: MANEJAR LOGIN AUTOMÁTICO ---------------------
+    function handleAutoLogin() {
+      // 1. Si ya estamos procesando un login o si el temporizador está activo, ignorar
+      if (isProcessingLogin) return;
+
       const inputUsername = usernameInput.value.trim();
       const normalizedUsername = inputUsername.toLowerCase(); 
 
-      // Deshabilitar interfaz mientras se procesa
-      loginButton.disabled = true;
-      usernameInput.disabled = true;
+      // Limpiar mensajes si el usuario borra el texto
+      if (inputUsername.length === 0) {
+          message.textContent = '';
+          return;
+      }
+      
+      // Cancelar cualquier retraso anterior (necesario si el usuario escribe rápido)
+      if (loginTimeoutId) {
+          clearTimeout(loginTimeoutId);
+      }
 
-      // Verificación insensible a mayúsculas usando USER_DATA
+      // 2. Verificación
       if(USER_DATA.hasOwnProperty(normalizedUsername)){
+        
+        // El usuario es válido, iniciar el proceso
+        isProcessingLogin = true; 
+        usernameInput.disabled = true; // Deshabilitar para que no sigan escribiendo
         
         message.textContent = "🔄 Verificando...";
         message.style.color = "#00ffff"; 
         
         const userData = USER_DATA[normalizedUsername];
         
-        // Simular el retraso de verificación (1.5s)
-        setTimeout(() => {
+        // 3. Simular el retraso de verificación (1.5s)
+        loginTimeoutId = setTimeout(() => {
           
           message.textContent = `✅ Usuario verificado. Iniciando chat...`;
           message.style.color = "lightgreen";
@@ -195,14 +208,9 @@
         }, 1500); 
         
       } else {
-        // Error
-        message.textContent = "❌ Usuario no registrado. Intenta de nuevo.";
+        // Usuario inválido (Solo mostrar error, no bloquear)
+        message.textContent = "❌ Usuario no registrado.";
         message.style.color = "red";
-        
-        // Re-habilitar
-        loginButton.disabled = false;
-        usernameInput.disabled = false;
-        usernameInput.focus();
       }
     }
     
@@ -213,10 +221,8 @@
 
         if (text === '') return;
 
-        // Añadir el mensaje al chat con el rango del usuario actual
         addMessage(currentAlias, text, currentRank);
         
-        // Limpiar input y reenfocar
         msgInput.value = '';
         msgInput.focus();
     }
@@ -225,32 +231,31 @@
         // Limpiar estados y regresar a la pantalla de login
         currentAlias = null;
         currentRank = null;
+        isProcessingLogin = false;
+        
         chatContainer.style.display = 'none';
         loginContainer.style.display = 'block';
         
-        // Limpiar y re-habilitar interfaz de login
-        loginButton.disabled = false;
+        // Re-habilitar
         usernameInput.disabled = false;
         usernameInput.value = '';
         message.textContent = '';
         usernameInput.focus();
         
-        // Limpiar mensajes del chat 
         chatBox.innerHTML = ''; 
     }
 
-    // --------------------- LISTENERS (Enter y Click) ---------------------
-    loginForm.addEventListener("submit", handleLogin);
+    // --------------------- LISTENERS ---------------------
     
-    // Manejar la tecla Enter en el campo de usuario
-    usernameInput.addEventListener("keypress", function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); 
-            handleLogin(event);
-        }
+    // 💡 CAMBIO CLAVE: Usamos el evento 'input' para activar el login automáticamente
+    usernameInput.addEventListener("input", handleAutoLogin);
+    
+    // Evitar que el formulario intente hacer un submit al presionar Enter (ya que el botón no existe)
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+        e.preventDefault();
     });
     
-    // Manejar la tecla Enter en el campo de mensaje
+    // Manejar la tecla Enter en el campo de mensaje del chat
     msgInput.addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
