@@ -3,7 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <title>Login IMP</title>
-  <link rel="stylesheet" href="/css/style.css"> 
+  
+  <style>
+    :root {
+      --neon-pink: #ff33cc;
+      --background-dark: #1a1a1a;
+      --card-dark: #333333;
+      --font-color: #f0f0f0;
+      --input-color: #505050;
+    }
+    
+    body {
+      background-color: var(--background-dark);
+      /* Puedes cambiar esto para usar tu imagen de fondo */
+      /* background-image: url('/assets/galaxy.jpg'); */ 
+      background-size: cover;
+      background-attachment: fixed;
+      font-family: 'Courier New', Courier, monospace;
+      color: var(--font-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      flex-direction: column;
+    }
+
+    .login-box {
+      width: 300px;
+      padding: 40px;
+      background: var(--card-dark);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 40px var(--neon-pink);
+      border-radius: 10px;
+      border: 2px solid var(--neon-pink);
+      box-sizing: border-box;
+      animation: neon-glow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes neon-glow {
+      from { text-shadow: 0 0 5px var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); }
+      to { text-shadow: 0 0 10px var(--neon-pink); box-shadow: 0 0 40px var(--neon-pink); }
+    }
+
+    h2 {
+      margin: 0 0 30px;
+      padding: 0;
+      color: var(--neon-pink);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 0;
+      font-size: 16px;
+      color: var(--font-color);
+      margin-bottom: 30px;
+      border: none;
+      border-bottom: 1px solid var(--neon-pink);
+      outline: none;
+      background: var(--input-color);
+      box-sizing: border-box;
+      text-align: center;
+      transition: border-color 0.3s;
+    }
+
+    button {
+      background-color: var(--neon-pink);
+      color: var(--background-dark);
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 18px;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: #ff66e0;
+    }
+    
+    #error {
+        color: #ff0000;
+        margin-top: 15px;
+        font-size: 14px;
+    }
+    
+  </style>
 </head>
 <body>
   
@@ -22,7 +111,7 @@
 
   <script>
     const audio = document.getElementById("background-music");
-    audio.play().catch(error => {}); // Intenta iniciar música
+    audio.play().catch(error => {}); 
 
     async function login() {
       const username = document.getElementById("username").value.trim();
@@ -35,7 +124,7 @@
       }
       errorDisplay.innerText = "";
 
-      audio.play().catch(e => {}); // Desbloquea audio con la interacción
+      audio.play().catch(e => {}); 
       
       const res = await fetch("/login", {
         method: "POST",
@@ -47,13 +136,13 @@
       if (data.success) {
         localStorage.setItem("musicPosition", audio.currentTime); 
         localStorage.setItem("username", data.username);
+        localStorage.setItem("rank", data.rank);
         window.location.href = "/chat.html";
       } else {
         errorDisplay.innerText = "❌ Usuario o contraseña incorrectos";
       }
     }
     
-    // Habilitar la tecla ENTER
     document.getElementById("password").addEventListener("keypress", function(event) {
       if (event.key === 'Enter') { 
         login();
