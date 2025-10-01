@@ -1,5 +1,5 @@
 // Servidor de Chat Persistente con Node.js y Express
-// Versión Final con Mensajes de Consola Claros
+// VERSIÓN ESTRICTA, OPTIMIZADA Y LISTA PARA PM2
 
 const express = require('express');
 const fs = require('fs');
@@ -8,21 +8,23 @@ const app = express();
 const port = 3000;
 const HOST = '0.0.0.0'; 
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');
-
-// La URL de Cloudflare cambia cada vez que se inicia Cloudflared sin cuenta.
-// Por seguridad y claridad, la dejaremos como una nota en la consola.
-// Tu IP local (Asegúrate que 192.168.100.101 sea tu IP actual)
 const LOCAL_IP = '192.168.100.101'; 
 
 // ----------------------------------------------------
 // 1. CONFIGURACIÓN INICIAL Y ESTÁTICA
 // ----------------------------------------------------
 
-// Middleware para parsear JSON de las peticiones POST
-app.use(express.json());
+// Optimización: Deshabilita el encabezado X-Powered-By por seguridad
+app.disable('x-powered-by'); 
+
+// Middleware para parsear JSON de las peticiones POST (Estricto y Optimizado)
+app.use(express.json({ limit: '1kb' })); // Límite estricto para payloads pequeños
 
 // Configuración para servir archivos estáticos (index.html, CSS, JS)
-app.use(express.static(path.join(__dirname, 'public'))); 
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '7d', // Cachea archivos estáticos por 7 días
+    immutable: true 
+})); 
 
 // ----------------------------------------------------
 // 2. Funciones de Persistencia Seguras
@@ -30,7 +32,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 function loadMessages() {
     try {
-        // Si el archivo NO existe, lo crea con un array vacío.
         if (!fs.existsSync(MESSAGES_FILE)) {
             fs.writeFileSync(MESSAGES_FILE, '[]', 'utf8');
         }
@@ -38,20 +39,19 @@ function loadMessages() {
         const data = fs.readFileSync(MESSAGES_FILE, 'utf8');
         return JSON.parse(data);
     } catch (error) {
+        // En caso de error de parseo, borra y comienza de nuevo para evitar fallos
+        fs.writeFileSync(MESSAGES_FILE, '[]', 'utf8');
         return [];
     }
 }
 
 function saveMessages(messages) {
-    try {
-        fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
-    } catch (error) {
-        console.error('Error al guardar mensajes:', error.message);
-    }
+    // Escrito de forma síncrona para asegurar que no se pierdan datos
+    fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
 }
 
 // ----------------------------------------------------
-// 3. ENDPOINTS (Rutas de API para el Chat)
+// 3. ENDPOINTS (Rutas de API)
 // ----------------------------------------------------
 
 app.get('/messages', (req, res) => {
@@ -61,15 +61,27 @@ app.get('/messages', (req, res) => {
 app.post('/messages', (req, res) => {
     const newMessage = req.body;
     
-    if (!newMessage || !newMessage.alias || !newMessage.text || !newMessage.rank) {
-        return res.status(400).json({ error: 'Faltan campos.' });
+    // Validación estricta de datos
+    if (!newMessage || !newMessage.alias || !newMessage.text || !newMessage.rank || newMessage.text.length > 256) {
+        return res.status(400).json({ error: 'Mensaje inválido o incompleto.' });
     }
     
     const messages = loadMessages();
-    messages.push({ ...newMessage, timestamp: new Date().toISOString() });
+    messages.push({ 
+        alias: newMessage.alias, 
+        rank: newMessage.rank, 
+        text: newMessage.text, 
+        timestamp: new Date().toISOString() 
+    });
     saveMessages(messages);
     
-    res.status(201).json(messages); 
+    // Respuesta de éxito mínima y optimizada
+    res.status(201).json({ status: 'ok' }); 
+});
+
+// Ruta de Fallback (Si no encuentra nada más)
+app.use((req, res) => {
+    res.status(404).send('404: Recurso no encontrado. (Server running)');
 });
 
 // ----------------------------------------------------
@@ -77,15 +89,12 @@ app.post('/messages', (req, res) => {
 // ----------------------------------------------------
 
 app.listen(port, HOST, () => {
-    
-    // El mensaje de consola más importante con ambos enlaces!
-    console.log(`\n========================================================================`);
-    console.log(` ✅ Servidor de Chat (Node.js/Express) INICIADO en el puerto ${port}`);
-    console.log(`========================================================================`);
-    console.log(`\n🔑 ENLACE LOCAL (SOLO PARA TI/RED WI-FI):`);
+    console.log(`\n======================================================`);
+    console.log(` ✅ SERVIDOR OPTIMIZADO: Node.js/Express (PM2 Ready)`);
+    console.log(`======================================================`);
+    console.log(`\n🔑 ENLACE LOCAL (PARA TI - CONSTANTE):`);
     console.log(`   --> http://${LOCAL_IP}:${port}`);
-    console.log(`\n🌐 ENLACE PÚBLICO (PARA AMIGOS EN OTROS PAÍSES):`);
-    console.log(`   --> ¡ASEGÚRATE DE CORRER CLOUDFLARED EN LA OTRA SESIÓN!`);
-    console.log(`   --> CLOUDFLARED te dará el enlace: [https://...trycloudflare.com]`);
-    console.log(`\n========================================================================\n`);
+    console.log(`\n🌐 ENLACE PÚBLICO (PARA AMIGOS):`);
+    console.log(`   --> Debes ejecutar Cloudflared y usar la URL que te dé.`);
+    console.log(`\n======================================================\n`);
 });
