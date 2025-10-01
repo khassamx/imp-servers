@@ -1,33 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Login IMP</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+  <link rel="stylesheet" href="/css/style.css"> </head>
 <body>
+  
+  <audio id="background-music" loop>
+    <source src="/assets/retro_theme.mp3" type="audio/mpeg"> Tu navegador no soporta el elemento de audio.
+  </audio>
+
   <div class="login-box">
     <h2>🔒 Ingreso al Servidor IMP</h2>
     <input type="text" id="username" placeholder="Usuario" autocomplete="off">
     <input type="password" id="password" placeholder="Contraseña" autocomplete="off">
-    <button onclick="login()">Entrar</button>
+    <button onclick="login()">ENTRAR</button>
     <p id="error"></p>
   </div>
 
   <script>
-    async function login() {
-      // (Mismo código de login aquí...)
-      let username = document.getElementById("username").value;
-      let password = document.getElementById("password").value;
+    const audio = document.getElementById("background-music");
+    audio.play().catch(error => { console.log("Música pendiente de interacción."); });
 
-      let res = await fetch("/login", {
+    async function login() {
+      const username = document.getElementById("username").value.trim(); // TRIM para optimizar
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) { // Validación estricta
+        document.getElementById("error").innerText = "❌ Ambos campos son obligatorios";
+        return;
+      }
+
+      audio.play().catch(e => {}); // Se intenta desbloquear el audio con el click
+      
+      const res = await fetch("/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
       });
 
-      let data = await res.json();
+      const data = await res.json();
       if (data.success) {
+        localStorage.setItem("musicPosition", audio.currentTime); 
         localStorage.setItem("username", data.username);
         window.location.href = "/chat.html";
       } else {
@@ -35,15 +49,12 @@
       }
     }
     
-    // --- LÓGICA PARA LA TECLA ENTER ---
+    // LÓGICA PARA LA TECLA ENTER
     document.getElementById("password").addEventListener("keypress", function(event) {
       if (event.key === 'Enter') { 
         login();
       }
     });
-    // Opcional: si quieres que funcione en cualquier parte de la página, usa el listener global que te di arriba.
-    // Usar solo el campo de password es más limpio.
-    
   </script>
 </body>
 </html>
