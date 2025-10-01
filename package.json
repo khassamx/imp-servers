@@ -1,22 +1,50 @@
 {
   "name": "imp-servers",
   "version": "1.0.0",
-  "description": "Server con traduccion automatica",
+  "description": "Servidor de Chat IMP con Express, Traducción Automática (Google Free) y almacenamiento local JSON. Diseñado para robustez y eficiencia en carga incremental de mensajes.",
   "main": "server.js",
+  
   "scripts": {
-    "start": "node server.js",  <-- ¡Esta es la optimización!
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    
+    "clean": "rm -rf node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install",
+    
+    "test": "echo '🚧 No hay tests definidos. Agrega Jest o Mocha aquí.' && exit 0",
+    "prestart": "npm audit --production",
+    "security-check": "npm audit"
   },
+  
   "keywords": [
     "express",
     "chat",
-    "translate"
+    "traduccion",
+    "node",
+    "backend"
   ],
-  "author": "",
+  
+  "author": "Tu Nombre/Alias Aquí",
   "license": "ISC",
+  
+  "engines": {
+    "node": ">=18.0.0" 
+  },
+  
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.19.2",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
     "translate": "^3.0.0"
+  },
+  
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  
+  "repository": {
+    "type": "git",
+    "url": "URL_DE_TU_REPOSITORIO_AQUÍ"
   }
 }
