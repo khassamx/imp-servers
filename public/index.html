@@ -8,7 +8,7 @@
   <style>
     /*
      * --------------------------------
-     * 1. ANIMACIONES BASE (Pintura Viva)
+     * CSS (Sin cambios, solo la estructura del código)
      * --------------------------------
      */
 
@@ -22,11 +22,6 @@
       50% { opacity: 0.3; transform: scale(0.7); }
     }
     
-    /*
-     * --------------------------------
-     * 2. CUERPO (FONDO GALÁCTICO VIVO)
-     * --------------------------------
-     */
     body {
       margin: 0;
       height: 100vh;
@@ -62,10 +57,6 @@
       z-index: -1;
     }
 
-    /* * --------------------------------
-     * 3. CONTENEDOR DE LOGIN
-     * --------------------------------
-     */
     .login-container {
       background: rgba(0,0,0,0.85);
       padding: 30px 40px;
@@ -86,7 +77,7 @@
 
     /* Ocultamos la contraseña y el botón 'submit' del formulario */
     #password {
-        display: none; /* ¡OCULTAR CONTRASEÑA! */
+        display: none;
     }
 
     input {
@@ -130,7 +121,7 @@
     <form id="loginForm">
       <input type="text" id="username" placeholder="Usuario (Oliver, Keko.imp, etc.)" required>
       <input type="password" id="password" placeholder="Contraseña (Oculta)" required> 
-      <button type="submit">Entrar</button>
+      <button id="loginButton" type="submit">Entrar</button>
     </form>
     <p id="message"></p>
   </div>
@@ -138,41 +129,70 @@
   <script>
     const loginForm = document.getElementById("loginForm");
     const message = document.getElementById("message");
+    const loginButton = document.getElementById("loginButton"); // Obtener el botón
+    const usernameInput = document.getElementById("username"); // Obtener el input de usuario
 
-    // 🔑 Lista de usuarios válidos (simulando users.json)
-    // Todos deben estar en minúsculas para la verificación
+    // Lista de usuarios válidos (simulando users.json) - todos en minúsculas
     const VALID_USERS = ["oliver", "keko.imp", "aye_russu", "atlas"];
-
-    loginForm.addEventListener("submit", function(e){
-      e.preventDefault();
+    
+    // Función para manejar el proceso de login
+    function handleLogin(e) {
+      // Prevenir el envío por defecto del formulario (si e existe)
+      if (e && e.preventDefault) {
+        e.preventDefault();
+      }
       
-      const inputUsername = document.getElementById("username").value.trim();
-      
-      // 💡 NORMALIZACIÓN: Convertir la entrada a minúsculas
+      const inputUsername = usernameInput.value.trim();
       const normalizedUsername = inputUsername.toLowerCase(); 
 
-      // 🔍 Verificación: Si el usuario (en minúsculas) está en la lista de válidos
+      // Deshabilitar botón y campo mientras se procesa
+      loginButton.disabled = true;
+      usernameInput.disabled = true;
+
+      // 🔍 Verificación
       if(VALID_USERS.includes(normalizedUsername)){
-        message.textContent = `✅ Bienvenido, ${inputUsername}!`;
-        message.style.color = "lightgreen";
         
-        // Simulación: Guardar el usuario (en el formato que ingresó) y redirigir
-        localStorage.setItem('currentUser', inputUsername); 
-        // window.location.href = 'chat.html'; // Descomentar si tienes el chat.html
+        // 1. Mostrar estado "Verificando..."
+        message.textContent = "🔄 Verificando...";
+        message.style.color = "#00ffff"; // Color cian/azul claro
+        
+        // 2. Establecer el retraso (simula la carga del chat)
+        setTimeout(() => {
+          
+          // 3. Mostrar estado "Bienvenido" brevemente
+          message.textContent = `✅ Usuario perfecto. Bienvenido, ${inputUsername}!`;
+          message.style.color = "lightgreen";
+          
+          // Guardar el usuario y redirigir
+          localStorage.setItem('currentUser', inputUsername); 
+          window.location.href = 'chat.html'; // ¡Redirección final!
+          
+        }, 1500); // 1.5 segundos de retraso
         
       } else {
-        message.textContent = "❌ Usuario no registrado.";
+        // En caso de error, mostrar el mensaje y re-habilitar el formulario
+        message.textContent = "❌ Usuario no registrado. Intenta de nuevo.";
         message.style.color = "red";
+        
+        // Re-habilitar
+        loginButton.disabled = false;
+        usernameInput.disabled = false;
+        usernameInput.focus(); // Pone el foco de nuevo en el campo
       }
-    });
+    }
+
+
+    // 1. Asociar la función al envío del formulario (botón "Entrar")
+    loginForm.addEventListener("submit", handleLogin);
     
-    // Función para manejar la tecla Enter
-    document.getElementById("username").addEventListener("keypress", function(event) {
+    // 2. Asociar la función a la tecla Enter en el campo de usuario
+    usernameInput.addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
-            event.preventDefault();
-            loginForm.dispatchEvent(new Event('submit'));
+            event.preventDefault(); // Detener el submit por defecto
+            handleLogin(event);
         }
     });
+
   </script>
 </body>
 </html>
