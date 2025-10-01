@@ -12,7 +12,7 @@
 
     <style>
         /* --------------------------------
-         * 1. ESTILOS BASE Y LAYOUT
+         * 1. ESTILOS BASE Y LAYOUT (Mobile-Friendly)
          * -------------------------------- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -34,7 +34,7 @@
             margin: 0 auto;
             background-color: #1e1e1e;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-            border-radius: 0; /* Bordes rectos para full-screen app look */
+            border-radius: 0; 
             overflow: hidden;
         }
 
@@ -66,7 +66,6 @@
         }
         
         #username-input, #login-button {
-            /* Mantiene la apariencia moderna */
             width: 100%;
             padding: 15px;
             margin-bottom: 20px;
@@ -74,7 +73,7 @@
         }
         
         /* --------------------------------
-         * 3. ESTILOS DEL CHAT
+         * 3. ESTILOS DEL CHAT (Con Botones Flotantes)
          * -------------------------------- */
         #chat-header {
             padding: 15px;
@@ -92,10 +91,15 @@
             word-wrap: break-word;
         }
         
+        .message-entry {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
         /* Contenedor flotante para el botón de foco */
         #focus-container {
             position: fixed;
-            bottom: 80px; /* Posicionado sobre el área de input */
+            bottom: 80px; 
             right: 20px;
             z-index: 50;
         }
@@ -104,7 +108,7 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background-color: #007bff; /* Azul vibrante */
+            background-color: #007bff; 
             color: white;
             border: none;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -112,13 +116,7 @@
             cursor: pointer;
             line-height: 50px;
             text-align: center;
-            transition: background-color 0.2s;
-            /* Muestra el botón solo cuando el chat está abierto */
             display: none; 
-        }
-
-        #focus-button:hover {
-            background-color: #0056b3;
         }
 
         #chat-input-area {
@@ -126,14 +124,28 @@
             padding: 10px;
             border-top: 1px solid #3a3a3a;
             background-color: #282828;
-            /* IMPORTANTE: Altura fija o mínima para que no salte al abrir teclado */
             min-height: 70px;
+        }
+
+        #attach-button {
+            padding: 12px 15px;
+            background-color: #007bff; /* Azul */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+
+        #attach-button:hover {
+            background-color: #0056b3;
         }
 
         #message-input {
             flex-grow: 1;
             padding: 12px;
-            border: 1px solid #444;
             border-radius: 6px;
             background-color: #333;
             color: #e0e0e0;
@@ -147,10 +159,16 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
         }
         
-        /* (Estilos de rangos, fade-in, y otros se mantienen intactos) */
+        /* Estilos de Medios */
+        .media-container img, .media-container video {
+            display: block;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        /* Colores de Rangos */
         .rank-Fundador { color: #FF00FF; font-weight: bold; text-shadow: 0 0 5px #FF00FF; } 
         .rank-Líder { color: #FF4500; font-weight: bold; } 
         .rank-Colíder { color: #FFD700; font-weight: bold; } 
@@ -182,7 +200,10 @@
             </div>
         
         <div id="chat-input-area">
-            <input type="text" id="message-input" placeholder="Escribe tu mensaje...">
+            <input type="file" id="file-input" style="display:none;" onchange="handleFileSelection()">
+            <button id="attach-button" onclick="document.getElementById('file-input').click()">📎</button>
+            
+            <input type="text" id="message-input" placeholder="Escribe tu mensaje o agrega un archivo...">
             <button id="send-button" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
@@ -206,8 +227,9 @@
         let currentUser = null; 
         const messagesDiv = document.getElementById('chat-messages');
         let connectionErrorShown = false; 
+        let selectedFile = null; // Variable para almacenar el archivo seleccionado
 
-        // Lógica de URL corregida para Cloudflare/Local
+        // Lógica de URL corregida para Cloudflare/Local (Sin puerto 3000 en HTTPS)
         const protocol = window.location.protocol; 
         const hostname = window.location.hostname;
         let apiHost = hostname;
@@ -221,7 +243,7 @@
 
 
         // ----------------------------------------------------
-        // 1. LÓGICA DE INICIO DE SESIÓN
+        // 1. LÓGICA DE INICIO Y PERMISOS
         // ----------------------------------------------------
 
         function login() {
@@ -234,9 +256,10 @@
                 document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('chat-container').style.display = 'flex';
-                
-                // Muestra el botón de foco una vez que se inicia el chat
                 document.getElementById('focus-button').style.display = 'block'; 
+                
+                // Solicitar permiso de Notificación al iniciar
+                requestNotificationPermission();
 
                 fetchMessages();
                 setInterval(fetchMessages, POLLING_INTERVAL); 
@@ -245,47 +268,108 @@
             }
         }
         
-        // ----------------------------------------------------
-        // 2. FUNCIÓN PARA EL BOTÓN DE ENFOQUE (FOCUS)
-        // ----------------------------------------------------
-        
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // Función para el botón de enfoque (Móvil)
         function focusInput() {
-            // 🚨 Esta línea pone el cursor en el input y abre el teclado
             document.getElementById('message-input').focus();
+        }
+        
+        // ----------------------------------------------------
+        // 2. MANEJO DE ARCHIVOS Y SUBIDA
+        // ----------------------------------------------------
+
+        function handleFileSelection() {
+            const input = document.getElementById('file-input');
+            selectedFile = input.files[0];
+            
+            if (selectedFile) {
+                const messageInput = document.getElementById('message-input');
+                // Muestra un mensaje temporal en el input de texto
+                messageInput.placeholder = `Archivo listo: ${selectedFile.name}. Presiona Enviar.`;
+                messageInput.value = ''; 
+                focusInput();
+            }
+        }
+
+        async function uploadFileAndSendMessage(messageData) {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // Subir el archivo al endpoint /upload
+            const uploadResponse = await fetch(SERVER_URL + '/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!uploadResponse.ok) {
+                const error = await uploadResponse.json();
+                throw new Error(`Fallo la subida del archivo: ${error.error || 'Desconocido'}`);
+            }
+
+            const uploadData = await uploadResponse.json();
+            
+            // Adjuntar los datos del archivo al mensaje
+            messageData.fileUrl = uploadData.fileUrl;
+            messageData.originalName = uploadData.originalName;
+            messageData.text = document.getElementById('message-input').value.trim() || null; // Pie de foto/video opcional
+            
+            // Resetear la selección
+            selectedFile = null;
+            document.getElementById('file-input').value = ''; 
+            document.getElementById('message-input').placeholder = 'Escribe tu mensaje o agrega un archivo...';
         }
 
 
         // ----------------------------------------------------
-        // 3. LÓGICA DE MENSAJES (Se mantiene intacta)
+        // 3. LÓGICA DE ENVÍO Y RECEPCIÓN
         // ----------------------------------------------------
 
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('message-input');
             const text = input.value.trim();
 
-            if (!text || !currentUser) return;
+            if (!text && !selectedFile) return;
             if (text.length > 256) {
-                alert('Mensaje demasiado largo (máx 256 caracteres).');
-                return;
+                 alert('Mensaje de texto demasiado largo (máx 256 caracteres).');
+                 return;
             }
 
-            const message = { alias: currentUser.alias, rank: currentUser.rank, text: text };
+            const messageData = {
+                alias: currentUser.alias,
+                rank: currentUser.rank,
+                text: text 
+            };
+            
+            try {
+                if (selectedFile) {
+                    // Primero sube el archivo si existe
+                    await uploadFileAndSendMessage(messageData);
+                }
 
-            fetch(SERVER_URL + '/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            })
-            .then(response => {
+                // Luego envía el mensaje (con o sin fileUrl)
+                const response = await fetch(SERVER_URL + '/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(messageData)
+                });
+
                 if (response.ok) {
                     input.value = ''; 
                     fetchMessages(); 
-                    input.focus(); // Mantiene el foco en el input después de enviar
+                    input.focus();
                 } else {
                     console.error('Error al enviar mensaje:', response.statusText);
+                    alert('Error al enviar. Revisa la consola para más detalles.');
                 }
-            })
-            .catch(error => { console.error('Error de red al enviar mensaje:', error); });
+            } catch (error) {
+                console.error('Error de red al enviar/subir:', error);
+                alert('No se pudo completar el envío: ' + error.message);
+            }
         }
 
         function fetchMessages() {
@@ -296,7 +380,12 @@
                 })
                 .then(messages => {
                     if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
+                    
                     if (messages.length > lastMessageCount) {
+                        // Dispara la notificación para el último mensaje nuevo
+                        const newMessage = messages[messages.length - 1]; 
+                        displaySystemNotification(newMessage); 
+                        
                         displayMessages(messages);
                         lastMessageCount = messages.length;
                     }
@@ -306,6 +395,89 @@
                 });
         }
 
+        function displaySystemNotification(message) {
+            // Dispara la notificación solo si el usuario dio permiso y el chat NO está activo
+            if (Notification.permission === 'granted' && !document.hasFocus()) {
+                const options = {
+                    body: message.text || (message.fileUrl ? 'Archivo adjunto' : 'Mensaje nuevo'),
+                    icon: 'logo.png',
+                    tag: 'new-chat-message' 
+                };
+                new Notification(`[${message.rank}] ${message.alias}:`, options);
+            }
+        }
+        
+        // ----------------------------------------------------
+        // 4. LÓGICA DE RENDERIZADO (Mostrar Medios)
+        // ----------------------------------------------------
+        
+        function displayMessages(messages) {
+            messagesDiv.innerHTML = ''; 
+            messages.forEach(msg => {
+                const messageEntry = document.createElement('div');
+                messageEntry.className = 'message-entry';
+                
+                // 1. Mostrar Rango y Alias
+                const rankSpan = document.createElement('span');
+                rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
+                rankSpan.textContent = '[' + msg.rank + ']';
+                
+                const aliasSpan = document.createElement('b');
+                aliasSpan.textContent = msg.alias;
+                aliasSpan.style.color = '#fff'; 
+                
+                messageEntry.appendChild(rankSpan);
+                messageEntry.appendChild(aliasSpan);
+                
+                // 2. MANEJO DE ARCHIVOS
+                if (msg.fileUrl) {
+                    const mediaContainer = document.createElement('div');
+                    mediaContainer.className = 'media-container';
+                    mediaContainer.style.marginTop = '5px';
+                    
+                    const fileExtension = msg.fileUrl.split('.').pop().toLowerCase();
+                    const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension);
+                    const isVideo = ['mp4', 'webm', 'ogg'].includes(fileExtension);
+
+                    if (isImage) {
+                        const img = document.createElement('img');
+                        img.src = msg.fileUrl;
+                        img.style.maxWidth = '100%';
+                        img.maxHeight = '250px';
+                        mediaContainer.appendChild(img);
+                    } else if (isVideo) {
+                        const video = document.createElement('video');
+                        video.src = msg.fileUrl;
+                        video.controls = true;
+                        video.style.maxWidth = '100%';
+                        video.maxHeight = '250px';
+                        mediaContainer.appendChild(video);
+                    }
+                    
+                    // Enlace de descarga para cualquier archivo
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = msg.fileUrl;
+                    downloadLink.download = msg.originalName || 'archivo_descargado';
+                    downloadLink.textContent = `[Descargar: ${msg.originalName || 'Archivo'}]`;
+                    downloadLink.style.color = '#00BFFF';
+                    downloadLink.style.display = 'block';
+                    
+                    mediaContainer.appendChild(downloadLink);
+                    messageEntry.appendChild(mediaContainer);
+                }
+
+                // 3. Mostrar Texto (pie de foto o mensaje normal)
+                if (msg.text) {
+                     messageEntry.appendChild(document.createTextNode(': ' + msg.text));
+                }
+                
+                messagesDiv.appendChild(messageEntry);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+
+        // --- Funciones Auxiliares ---
         function displayConnectionError() {
             if (!document.getElementById('connection-error-message')) {
                 const errorDiv = document.createElement('div');
@@ -322,30 +494,7 @@
             if (errorDiv) { errorDiv.remove(); }
         }
 
-        function displayMessages(messages) {
-            messagesDiv.innerHTML = ''; 
-            messages.forEach(msg => {
-                const messageEntry = document.createElement('div');
-                messageEntry.className = 'message-entry';
-                
-                const rankSpan = document.createElement('span');
-                rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
-                rankSpan.textContent = '[' + msg.rank + ']';
-                
-                const aliasSpan = document.createElement('b');
-                aliasSpan.textContent = msg.alias;
-                aliasSpan.style.color = '#fff'; 
-                
-                messageEntry.appendChild(rankSpan);
-                messageEntry.appendChild(aliasSpan);
-                messageEntry.appendChild(document.createTextNode(': ' + msg.text));
-                
-                messagesDiv.appendChild(messageEntry);
-            });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        // Eventos de teclado
+        // Eventos de teclado y carga inicial
         document.getElementById('username-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { login(); } });
         document.getElementById('message-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { sendMessage(); } });
         window.onload = function() { document.getElementById('username-input').focus(); };
