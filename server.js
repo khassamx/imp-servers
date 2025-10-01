@@ -6,31 +6,32 @@ const translate = require("translate");
 
 // Configuración de Traducción
 translate.engine = "google"; 
-translate.key = undefined; // Sin API key usa traducción gratuita
+translate.key = undefined; 
 
 const app = express();
 const PORT = 3000;
 
-// Middlewares
+// Middlewares - Definición estricta de rutas de archivos estáticos
 app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // Sirve index.html y chat.html desde la raíz de public
+app.use("/css", express.static(path.join(__dirname, "public/css"))); // Sirve CSS
+app.use("/assets", express.static(path.join(__dirname, "public/assets"))); // Sirve Imagen y Audio
 
-// Archivos de datos
+// Archivos de datos (restante igual)
 const USERS_FILE = path.join(__dirname, "data", "users.json");
 const MESSAGES_FILE = path.join(__dirname, "data", "messages.json");
 
-// Leer JSON
+// ... (Funciones readJSON, writeJSON, y rutas /login, /messages) ...
+
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
   return JSON.parse(fs.readFileSync(file));
 }
 
-// Escribir JSON
 function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// Ruta: login
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   const users = readJSON(USERS_FILE);
@@ -43,34 +44,28 @@ app.post("/login", (req, res) => {
   }
 });
 
-// Ruta: obtener mensajes
-// La ruta ahora puede aceptar un parámetro 'lastIndex' para optimizar la carga
 app.get("/messages", (req, res) => {
   const messages = readJSON(MESSAGES_FILE);
   let lastIndex = parseInt(req.query.lastIndex) || 0;
   
-  // Devuelve solo los mensajes nuevos desde el índice solicitado
   const newMessages = messages.slice(lastIndex);
   
   res.json({
     messages: newMessages,
-    totalCount: messages.length // Devuelve el conteo total para que el cliente sepa dónde empezar la próxima vez
+    totalCount: messages.length
   });
 });
 
-// Ruta: enviar mensaje con traducción y manejo de errores
 app.post("/messages", async (req, res) => {
   let { username, text } = req.body;
   const messages = readJSON(MESSAGES_FILE);
-  let translatedText = text; // Por defecto, es el mismo texto
+  let translatedText = text;
 
   try {
-    // Intentar traducir
     translatedText = await translate(text, { to: "es" });
   } catch (error) {
-    console.error("❌ Error de traducción:", error.message);
-    // Si la traducción falla, usamos el texto original y avisamos
-    translatedText = `(Traducción fallida) ${text}`; 
+    console.error("❌ Error de traducción. Usando texto original:", error.message);
+    translatedText = `(TRADUCCIÓN FALLIDA) ${text}`; 
   }
 
   const newMessage = { 
