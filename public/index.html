@@ -44,14 +44,13 @@
 
     h1 { margin-bottom: 25px; color: #00ffff; }
     #password { display: none; } /* Ocultar Contraseña */
-    #loginButton { display: none; } /* ¡OCULTAR BOTÓN ENTRAR! */
+    #loginButton { display: none; } /* Ocultar botón Enter */
 
     input {
       width: calc(100% - 20px); padding: 10px; margin: 10px 0; border: none;
       border-radius: 8px; background: #333; color: #fff; font-size: 1em;
     }
 
-    /* Estilos del chat (mantener, ya que el login no tiene botón) */
     button {
       width: 100%; padding: 10px; margin-top: 10px; background: #ff69b4; border: none;
       border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s;
@@ -123,8 +122,11 @@
     
     let currentAlias = null; 
     let currentRank = null; 
-    let isProcessingLogin = false; // Bandera para evitar múltiples intentos de login
-    let loginTimeoutId = null; // ID del temporizador para el retraso
+    let isProcessingLogin = false; 
+    let loginTimeoutId = null; 
+    
+    // 💡 NUEVO: Clave para guardar los mensajes en el navegador
+    const STORAGE_KEY = 'chatMessagesIMP'; 
 
     // 🔑 DATA DE USUARIOS Y RANGOS
     const USER_DATA = {
@@ -134,18 +136,52 @@
         "atlas": { alias: "Atlas", rank: "Usuario" }
     };
     
-    // Función central para añadir mensajes al chat
+    // --------------------- MANEJO DE MENSAJES (LocalStorage) ---------------------
+
+    // NUEVO: Guarda el mensaje en el LocalStorage
+    function saveMessage(messageObj) {
+        // 1. Obtener los mensajes existentes (o un array vacío)
+        const messages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        
+        // 2. Añadir el nuevo mensaje
+        messages.push(messageObj);
+        
+        // 3. Guardar el array completo
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+    
+    // NUEVO: Carga los mensajes del LocalStorage
+    function loadMessages() {
+        const messages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        
+        // Limpiar la caja de chat antes de cargar
+        chatBox.innerHTML = ''; 
+
+        // Cargar los mensajes uno por uno
+        messages.forEach(msg => {
+            const newMessage = document.createElement('p');
+            const rankClass = msg.rank.replace(/\s/g, ''); 
+            
+            newMessage.innerHTML = `<span class="rank-${rankClass} rank-tag">[${msg.rank}]</span> <b>${msg.alias}</b>: ${msg.text}`;
+            chatBox.appendChild(newMessage);
+        });
+        
+        // Asegurarse de que siempre esté abajo
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    
+    // Función central para añadir mensajes al DOM (y guardarlos)
     function addMessage(alias, text, rank = 'Usuario') {
         const newMessage = document.createElement('p');
         const rankClass = rank.replace(/\s/g, ''); 
         
-        newMessage.innerHTML = `
-            <span class="rank-${rankClass} rank-tag">[${rank}]</span> 
-            <b>${alias}</b>: ${text}
-        `;
+        newMessage.innerHTML = `<span class="rank-${rankClass} rank-tag">[${rank}]</span> <b>${alias}</b>: ${text}`;
         
         chatBox.appendChild(newMessage);
         chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // 💡 Guardar el mensaje automáticamente
+        saveMessage({ alias, text, rank });
     }
 
     // --------------------- FUNCIÓN: INICIAR CHAT ---------------------
@@ -160,44 +196,42 @@
         chatContainer.style.display = 'block';
         
         msgInput.focus();
-        isProcessingLogin = false; // Resetear la bandera
+        isProcessingLogin = false; 
         
-        // Mensaje de Bienvenida del Sistema
+        // 💡 CARGAR MENSAJES GUARDADOS
+        loadMessages();
+        
+        // Mensaje de Bienvenida del Sistema (después de cargar historial)
         addMessage("Sistema", `¡Bienvenido, ${currentAlias}! Tu rango es ${currentRank}.`, 'System');
     }
 
     // --------------------- FUNCIÓN: MANEJAR LOGIN AUTOMÁTICO ---------------------
     function handleAutoLogin() {
-      // 1. Si ya estamos procesando un login o si el temporizador está activo, ignorar
       if (isProcessingLogin) return;
 
       const inputUsername = usernameInput.value.trim();
       const normalizedUsername = inputUsername.toLowerCase(); 
 
-      // Limpiar mensajes si el usuario borra el texto
       if (inputUsername.length === 0) {
           message.textContent = '';
           return;
       }
       
-      // Cancelar cualquier retraso anterior (necesario si el usuario escribe rápido)
       if (loginTimeoutId) {
           clearTimeout(loginTimeoutId);
       }
 
-      // 2. Verificación
       if(USER_DATA.hasOwnProperty(normalizedUsername)){
         
-        // El usuario es válido, iniciar el proceso
         isProcessingLogin = true; 
-        usernameInput.disabled = true; // Deshabilitar para que no sigan escribiendo
+        usernameInput.disabled = true;
         
         message.textContent = "🔄 Verificando...";
         message.style.color = "#00ffff"; 
         
         const userData = USER_DATA[normalizedUsername];
         
-        // 3. Simular el retraso de verificación (1.5s)
+        // Simular el retraso de verificación (1.5s)
         loginTimeoutId = setTimeout(() => {
           
           message.textContent = `✅ Usuario verificado. Iniciando chat...`;
@@ -208,7 +242,7 @@
         }, 1500); 
         
       } else {
-        // Usuario inválido (Solo mostrar error, no bloquear)
+        // Usuario inválido (Solo mostrar error)
         message.textContent = "❌ Usuario no registrado.";
         message.style.color = "red";
       }
@@ -221,6 +255,7 @@
 
         if (text === '') return;
 
+        // Añadir y Guardar el mensaje
         addMessage(currentAlias, text, currentRank);
         
         msgInput.value = '';
@@ -242,15 +277,17 @@
         message.textContent = '';
         usernameInput.focus();
         
+        // Los mensajes en el LocalStorage SE MANTIENEN. 
+        // Solo limpiamos la caja visualmente para que loadMessages la llene al entrar.
         chatBox.innerHTML = ''; 
     }
 
     // --------------------- LISTENERS ---------------------
     
-    // 💡 CAMBIO CLAVE: Usamos el evento 'input' para activar el login automáticamente
+    // Activación automática al escribir
     usernameInput.addEventListener("input", handleAutoLogin);
     
-    // Evitar que el formulario intente hacer un submit al presionar Enter (ya que el botón no existe)
+    // Evitar el submit del formulario (ya no hay botón)
     document.getElementById("loginForm").addEventListener("submit", function(e) {
         e.preventDefault();
     });
