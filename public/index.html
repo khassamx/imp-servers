@@ -82,7 +82,7 @@
             font-weight: bold;
             text-align: center;
             border-bottom: 1px solid #3a3a3a;
-            display: flex; /* Para alinear el botón de salir */
+            display: flex; 
             justify-content: space-between;
             align-items: center;
         }
@@ -259,7 +259,14 @@
 
         const ADMIN_RANKS = ["Fundador", "Líder"];
 
+        // 🚨 CORRECCIÓN AUTO-LOGIN: Intentamos cargar la sesión guardada inmediatamente.
         let currentUser = null; 
+        const savedKey = localStorage.getItem('chat_user_key');
+        if (savedKey && USER_DATA[savedKey]) {
+            currentUser = USER_DATA[savedKey];
+            currentUser.key = savedKey; // Guardamos la clave para consistencia
+        }
+
         const messagesDiv = document.getElementById('chat-messages');
         let connectionErrorShown = false; 
         let selectedFile = null; 
@@ -281,7 +288,7 @@
 
 
         // ----------------------------------------------------
-        // 1. LÓGICA DE INICIO Y PERMISOS
+        // 1. LÓGICA DE INICIO Y PERSISTENCIA
         // ----------------------------------------------------
 
         function login(userKey) {
@@ -292,11 +299,21 @@
             if (USER_DATA[username]) {
                 currentUser = USER_DATA[username];
                 
-                // 🚨 GUARDAR SESIÓN EN LOCALSTORAGE
+                // GUARDAR SESIÓN EN LOCALSTORAGE
                 localStorage.setItem('chat_user_key', username);
                 localStorage.setItem('chat_user_alias', currentUser.alias);
                 localStorage.setItem('chat_user_rank', currentUser.rank);
 
+                // LLAMAMOS AL CHECK PARA INICIAR LA INTERFAZ
+                checkAutoLogin(); 
+            } else {
+                errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
+            }
+        }
+        
+        function checkAutoLogin() {
+            if (currentUser) {
+                // Si la sesión se cargó arriba o se acaba de hacer login, activamos la interfaz y el polling
                 document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('chat-container').style.display = 'flex';
@@ -307,17 +324,7 @@
                 fetchMessages();
                 setInterval(fetchMessages, POLLING_INTERVAL); 
             } else {
-                errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
-            }
-        }
-        
-        function checkAutoLogin() {
-            const savedKey = localStorage.getItem('chat_user_key');
-            if (savedKey && USER_DATA[savedKey]) {
-                // Si encontramos una clave válida, iniciamos sesión automáticamente
-                login(savedKey);
-            } else {
-                // Si no, forzamos el foco en el campo de la clave
+                // Si no hay sesión, mostramos el login e iniciamos el foco.
                 document.getElementById('username-input').focus();
             }
         }
@@ -529,8 +536,24 @@
         }
         
         // ----------------------------------------------------
-        // 4. LÓGICA DE RENDERIZADO (Mostrar Medios y Botones de Admin)
+        // 4. LÓGICA DE RENDERIZADO AVANZADO
         // ----------------------------------------------------
+        
+        // 🚨 NUEVA FUNCIÓN: Conversión de Markdown a HTML (Negritas/Itálicas)
+        function formatText(text) {
+            if (!text) return '';
+            // Negritas: *texto* -> <b>texto</b>
+            let formattedText = text.replace(/\*([^\*]+)\*/g, '<b>$1</b>');
+            // Itálicas: _texto_ -> <i>texto</i>
+            formattedText = formattedText.replace(/\_([^\_]+)\_/g, '<i>$1</i>');
+            return formattedText;
+        }
+        
+        // 🚨 NUEVA FUNCIÓN: Formato de la hora
+        function formatTimestamp(isoString) {
+            const date = new Date(isoString);
+            return `[${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}]`;
+        }
         
         function displayMessages(messages) {
             messagesDiv.innerHTML = ''; 
@@ -545,20 +568,27 @@
                 headerContainer.style.display = 'flex';
                 headerContainer.style.alignItems = 'center';
                 
-                // 1. Rango y Alias
+                // 1. Marca de Tiempo
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = formatTimestamp(msg.timestamp);
+                timeSpan.style.color = '#777';
+                timeSpan.style.marginRight = '8px';
+                
+                // 2. Rango y Alias
                 const rankSpan = document.createElement('span');
                 rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
                 rankSpan.textContent = '[' + msg.rank + ']';
                 
                 const aliasSpan = document.createElement('b');
-                aliasSpan.textContent = msg.alias;
+                aliasSpan.textContent = msg.alias + ':';
                 aliasSpan.style.color = '#fff'; 
                 aliasSpan.style.marginLeft = '5px';
                 
+                headerContainer.appendChild(timeSpan);
                 headerContainer.appendChild(rankSpan);
                 headerContainer.appendChild(aliasSpan);
                 
-                // 2. BOTÓN DE ELIMINAR (Solo para Admins)
+                // 3. BOTÓN DE ELIMINAR (Solo para Admins)
                 if (isCurrentUserAdmin && msg.id) {
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = '❌';
@@ -575,8 +605,8 @@
                 
                 messageEntry.appendChild(headerContainer);
 
-                // 3. Contenido del Mensaje
-                const contentContainer = document.createElement('span');
+                // 4. Contenido del Mensaje
+                const contentContainer = document.createElement('div');
                 
                 if (msg.fileUrl) {
                     const mediaContainer = document.createElement('div');
@@ -615,8 +645,9 @@
 
                 if (msg.text) {
                     const textNode = document.createElement('div');
-                    textNode.textContent = msg.text;
                     textNode.style.marginLeft = '5px';
+                    // 🚨 APLICAR FORMATO MARKDOWN
+                    textNode.innerHTML = formatText(msg.text); 
                     contentContainer.appendChild(textNode);
                 }
                 
@@ -655,7 +686,7 @@
             }
         });
         
-        // 🚨 CHEQUEO DE INICIO DE SESIÓN AL CARGAR
+        // CHEQUEO DE INICIO DE SESIÓN AL CARGAR
         window.onload = function() { checkAutoLogin(); };
         
     </script>
