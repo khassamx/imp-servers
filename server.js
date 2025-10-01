@@ -1,219 +1,317 @@
-// Servidor de Chat Persistente con Node.js y Express
-// VERSIÓN FINAL CON ARCHIVOS, ELIMINACIÓN ADMIN, LIMPIEZA AUTOMÁTICA E INDICADOR 'ESCRIBIENDO'
-
 const express = require('express');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+
 const app = express();
-const port = 3000;
-const HOST = '0.0.0.0'; 
+const PORT = 3000;
+
+// Rutas de archivos
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');
-const UPLOADS_DIR = path.join(__dirname, 'public/uploads'); 
-const LOCAL_IP = '192.168.100.101'; 
+const USERS_FILE = path.join(__dirname, 'users.json');
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
-// 🚨 VARIABLE DE ESTADO DE TECLEO: Guardamos el alias y el momento del último tecleo.
-let typingUsers = {}; 
+// Estado del servidor
+let messages = [];
+let users = {};
+let typingStatus = {};
 
 // ----------------------------------------------------
-// 1. CONFIGURACIÓN DE CARGA DE ARCHIVOS (Multer)
+// 1. UTILIDADES Y CONFIGURACIÓN INICIAL
 // ----------------------------------------------------
 
-if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
+// Configuración de Multer para la subida de archivos
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: (req, file, cb) => {
         cb(null, UPLOADS_DIR);
     },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileExtension = path.extname(file.originalname);
-        cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
+    filename: (req, file, cb) => {
+        const fileExt = path.extname(file.originalname);
+        cb(null, uuidv4() + fileExt);
     }
 });
-
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB Límite de archivo
-}).single('file'); 
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
-// ----------------------------------------------------
-// 2. MIDDLEWARE GENERAL Y PERSISTENCIA (JSON)
-// ----------------------------------------------------
+app.use(express.json()); // Habilitar body-parser para JSON
+app.use(express.static(path.join(__dirname, 'public'))); // Servir archivos estáticos
 
-app.disable('x-powered-by'); 
-app.use(express.json({ limit: '1kb' })); 
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', immutable: true })); 
+// Habilitar CORS para desarrollo (Necesario si el front-end y back-end tienen puertos diferentes)
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE');
+    next();
+});
 
-function loadMessages() {
+/**
+ * Carga los datos de mensajes y usuarios desde los archivos.
+ */
+async function loadData() {
     try {
-        if (!fs.existsSync(MESSAGES_FILE)) { fs.writeFileSync(MESSAGES_FILE, '[]', 'utf8'); }
-        const data = fs.readFileSync(MESSAGES_FILE, 'utf8');
-        let messages = JSON.parse(data);
-        
-        // Asegurar que cada mensaje tenga un 'id'
-        messages = messages.map((msg, index) => {
-            if (!msg.id) {
-                msg.id = (msg.timestamp || Date.now()) + '-' + index; 
-            }
-            return msg;
-        });
-        return messages;
+        // Cargar Mensajes
+        const messagesData = await fs.readFile(MESSAGES_FILE, 'utf8');
+        messages = JSON.parse(messagesData);
     } catch (error) {
-        console.error("Error al cargar mensajes, reiniciando historial:", error);
-        fs.writeFileSync(MESSAGES_FILE, '[]', 'utf8');
-        return [];
-    }
-}
-
-function saveMessages(messages) {
-    fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
-}
-
-// ----------------------------------------------------
-// 3. FUNCIÓN DE LIMPIEZA AUTOMÁTICA
-// ----------------------------------------------------
-
-function startAutoCleanup() {
-    const messages = loadMessages();
-    const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 días en milisegundos
-    let cleanedCount = 0;
-    
-    // Filtra los mensajes que son más recientes que hace 3 días
-    const filteredMessages = messages.filter(msg => {
-        const msgTimestamp = new Date(msg.timestamp).getTime();
-        
-        if (msgTimestamp < threeDaysAgo) {
-            cleanedCount++;
-            return false;
+        if (error.code === 'ENOENT') {
+            console.log('Archivo de mensajes no encontrado, inicializando vacío.');
+            messages = [];
+        } else {
+            console.error('Error al cargar mensajes:', error);
         }
-        return true;
-    });
+    }
 
-    if (cleanedCount > 0) {
-        saveMessages(filteredMessages);
-        console.log(`\n🧹 LIMPIEZA AUTOMÁTICA: Se eliminaron ${cleanedCount} mensajes de más de 3 días.`);
-    } else {
-        console.log(`\n🧹 LIMPIEZA AUTOMÁTICA: No se encontraron mensajes antiguos.`);
+    try {
+        // Cargar Usuarios
+        const usersData = await fs.readFile(USERS_FILE, 'utf8');
+        users = JSON.parse(usersData);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.log('Archivo de usuarios no encontrado, inicializando vacío.');
+            users = {};
+        } else {
+            console.error('Error al cargar usuarios:', error);
+        }
+    }
+}
+
+/**
+ * Guarda el array de mensajes en el archivo.
+ */
+async function saveMessages() {
+    try {
+        await fs.writeFile(MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error al guardar mensajes:', error);
+    }
+}
+
+/**
+ * Guarda el objeto de usuarios en el archivo.
+ */
+async function saveUsers() {
+    try {
+        await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error al guardar usuarios:', error);
     }
 }
 
 
 // ----------------------------------------------------
-// 4. ENDPOINTS DE API (CHAT)
+// 2. ENDPOINTS DE AUTENTICACIÓN (NUEVOS)
 // ----------------------------------------------------
 
-// GET /messages (Obtener historial)
+/**
+ * POST /register: Maneja el registro de nuevos usuarios.
+ */
+app.post('/register', async (req, res) => {
+    const { name, username, password, alias, country, whatsapp, email, rank } = req.body;
+
+    if (!username || !password || !alias) {
+        return res.status(400).json({ message: 'Campos requeridos faltantes.' });
+    }
+
+    if (users[username]) {
+        return res.status(409).json({ message: 'El usuario ya existe.' });
+    }
+    
+    // NOTA: En un sistema real, la contraseña debe ser HASHED (encriptada).
+    // Aquí la almacenamos como texto plano por simplicidad, ¡pero ten cuidado!
+    users[username] = {
+        name,
+        password, // PELIGRO: Usar hash en producción
+        alias,
+        country,
+        whatsapp,
+        email,
+        rank: rank || 'Miembro',
+        createdAt: new Date().toISOString()
+    };
+
+    await saveUsers();
+    console.log(`Usuario registrado: ${username} (${alias})`);
+    res.status(201).json({ alias, rank: users[username].rank, message: 'Registro exitoso.' });
+});
+
+
+/**
+ * POST /login: Maneja la autenticación de usuarios.
+ */
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Falta usuario o contraseña.' });
+    }
+
+    const user = users[username];
+
+    if (!user || user.password !== password) {
+        return res.status(401).json({ message: 'Credenciales inválidas.' });
+    }
+
+    console.log(`Login exitoso para: ${username} (${user.alias})`);
+    res.json({ alias: user.alias, rank: user.rank, message: 'Login exitoso.' });
+});
+
+
+// ----------------------------------------------------
+// 3. ENDPOINTS DEL CHAT
+// ----------------------------------------------------
+
+/**
+ * POST /messages: Envía un nuevo mensaje.
+ */
+app.post('/messages', async (req, res) => {
+    const { alias, rank, text, fileUrl, originalName } = req.body;
+
+    if (!alias || !rank) {
+        return res.status(400).json({ message: 'Datos de usuario faltantes.' });
+    }
+
+    const newMessage = {
+        id: uuidv4(),
+        alias: alias,
+        rank: rank,
+        text: text,
+        fileUrl: fileUrl || null,
+        originalName: originalName || null,
+        timestamp: new Date().toISOString()
+    };
+
+    messages.push(newMessage);
+    await saveMessages();
+
+    // Eliminar la señal de tecleo después de enviar el mensaje
+    if (typingStatus[alias]) {
+        delete typingStatus[alias];
+    }
+
+    res.status(201).json(newMessage);
+});
+
+/**
+ * GET /messages: Devuelve todos los mensajes.
+ */
 app.get('/messages', (req, res) => {
-    res.json(loadMessages());
+    res.json(messages);
 });
 
-// GET /typing (Devuelve la lista de usuarios tecleando)
-app.get('/typing', (req, res) => {
-    const now = Date.now();
-    const activeTyping = {};
-    
-    // Filtra los usuarios cuya señal de tecleo tiene menos de 4 segundos
-    for (const alias in typingUsers) {
-        if (now - typingUsers[alias] < 4000) { 
-            activeTyping[alias] = typingUsers[alias];
-        }
-    }
-    
-    // Limpia y actualiza los usuarios activos
-    typingUsers = activeTyping; 
-    
-    res.json(Object.keys(typingUsers)); // Devuelve solo un array con los alias
-});
-
-// POST /typing (Actualiza el estado de tecleo)
-app.post('/typing', (req, res) => {
-    const alias = req.body.alias;
-    if (alias) {
-        typingUsers[alias] = Date.now(); // Actualiza la marca de tiempo
-        res.status(200).json({ status: 'ok' });
-    } else {
-        res.status(400).json({ error: 'Falta el alias.' });
-    }
-});
-
-
-// POST /upload (Maneja la subida de archivos)
-app.post('/upload', (req, res) => {
-    upload(req, res, function (err) {
-        if (err) {
-            return res.status(500).json({ error: 'Error al subir: Archivo demasiado grande o desconocido.' });
-        }
-        
-        const fileUrl = '/uploads/' + path.basename(req.file.path); 
-        res.status(200).json({ fileUrl: fileUrl, originalName: req.file.originalname });
-    });
-});
-
-// POST /messages (Maneja el envío de texto O la URL del archivo)
-app.post('/messages', (req, res) => {
-    const newMessage = req.body;
-    
-    if (!newMessage || !newMessage.alias || !newMessage.rank || (!newMessage.text && !newMessage.fileUrl)) {
-        return res.status(400).json({ error: 'Faltan campos.' });
-    }
-    
-    // Limpia el estado de tecleo del usuario que acaba de enviar un mensaje
-    if (typingUsers[newMessage.alias]) {
-         delete typingUsers[newMessage.alias];
-    }
-
-    const messages = loadMessages();
-    const newId = Date.now() + '-' + messages.length; 
-
-    messages.push({ 
-        id: newId, 
-        alias: newMessage.alias, 
-        rank: newMessage.rank, 
-        text: newMessage.text || null,
-        fileUrl: newMessage.fileUrl || null,
-        originalName: newMessage.originalName || null,
-        timestamp: new Date().toISOString() 
-    });
-    saveMessages(messages);
-    
-    res.status(201).json({ status: 'ok' }); 
-});
-
-// DELETE /messages/:id (Elimina un mensaje por ID - Solo Admins)
-app.delete('/messages/:id', (req, res) => {
-    const messageIdToDelete = req.params.id;
-    let messages = loadMessages();
+/**
+ * DELETE /messages/:id: Elimina un mensaje.
+ */
+app.delete('/messages/:id', async (req, res) => {
+    const { id } = req.params;
     const initialLength = messages.length;
     
-    messages = messages.filter(msg => msg.id !== messageIdToDelete);
-    
+    messages = messages.filter(msg => msg.id !== id);
+
     if (messages.length < initialLength) {
-        saveMessages(messages);
-        res.status(200).json({ status: 'ok', message: `Mensaje ${messageIdToDelete} eliminado.` });
+        await saveMessages();
+        res.status(200).json({ message: 'Mensaje eliminado.' });
     } else {
-        res.status(404).json({ error: 'Mensaje no encontrado.' });
+        res.status(404).json({ message: 'Mensaje no encontrado.' });
     }
 });
 
 
-// Ruta de Fallback (404)
-app.use((req, res) => {
-    res.status(404).send('404: Recurso no encontrado. (Server running)');
+/**
+ * POST /upload: Sube un archivo.
+ */
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No se subió ningún archivo.' });
+    }
+
+    // Devolvemos la URL relativa para que el cliente la use
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ 
+        fileUrl: fileUrl, 
+        originalName: req.file.originalname 
+    });
 });
 
+
+/**
+ * POST /typing: Recibe la señal de tecleo.
+ */
+app.post('/typing', (req, res) => {
+    const { alias } = req.body;
+    if (alias) {
+        typingStatus[alias] = Date.now();
+        res.status(200).json({ message: 'Señal de tecleo recibida.' });
+    } else {
+        res.status(400).json({ message: 'Falta alias.' });
+    }
+});
+
+/**
+ * GET /typing: Devuelve la lista de usuarios tecleando.
+ */
+app.get('/typing', (req, res) => {
+    const now = Date.now();
+    const activeTyping = [];
+
+    // Limpiar señales de tecleo antiguas (más de 4 segundos)
+    for (const alias in typingStatus) {
+        if (now - typingStatus[alias] < 4000) {
+            activeTyping.push(alias);
+        } else {
+            delete typingStatus[alias];
+        }
+    }
+    res.json(activeTyping);
+});
+
+
 // ----------------------------------------------------
-// 5. Inicio del Servidor
+// 4. MANTENIMIENTO Y ARRANQUE
 // ----------------------------------------------------
 
-startAutoCleanup(); 
+/**
+ * Tarea de limpieza programada para eliminar archivos de más de 30 minutos.
+ */
+async function runCleanup() {
+    try {
+        const files = await fs.readdir(UPLOADS_DIR);
+        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
 
-app.listen(port, HOST, () => {
-    console.log(`\n======================================================`);
-    console.log(` ✅ SERVIDOR OPTIMIZADO: Node.js/Express (PM2 Ready)`);
-    console.log(` 🔑 LIMPIEZA AUTOMÁTICA ACTIVADA: Cada 3 días.`);
-    console.log(` ✍️ SOPORTE 'ESCRIBIENDO...' HABILITADO.`);
-    console.log(`======================================================\n`);
+        for (const file of files) {
+            const filePath = path.join(UPLOADS_DIR, file);
+            
+            // Ignorar el archivo .gitkeep si existe
+            if (file === '.gitkeep') continue;
+
+            const stats = await fs.stat(filePath);
+            
+            if (stats.birthtimeMs < thirtyMinutesAgo) {
+                await fs.unlink(filePath);
+                console.log(`[CLEANUP] Archivo eliminado: ${file}`);
+            }
+        }
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+             console.error('Error en la tarea de limpieza:', error);
+        } else {
+             // Si el directorio UPLOADS_DIR no existe, lo creamos
+             try { await fs.mkdir(UPLOADS_DIR, { recursive: true }); } catch (e) { console.error('Fallo al crear directorio de subidas:', e); }
+        }
+    }
+}
+
+// Inicializa el servidor
+loadData().then(() => {
+    // Asegurar que el directorio de subidas existe antes de empezar
+    runCleanup(); 
+    setInterval(runCleanup, CLEANUP_INTERVAL); // Programar la limpieza periódica
+
+    app.listen(PORT, () => {
+        console.log(`Servidor iniciado en http://localhost:${PORT}`);
+        console.log(`Directorio de subidas: ${UPLOADS_DIR}`);
+    });
 });
