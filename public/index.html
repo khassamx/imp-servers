@@ -82,6 +82,25 @@
             font-weight: bold;
             text-align: center;
             border-bottom: 1px solid #3a3a3a;
+            display: flex; /* Para alinear el botón de salir */
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #chat-header span {
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        #logout-button {
+            padding: 5px 10px; 
+            background: #dc3545; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 0.8em;
+            margin-left: 10px;
         }
 
         #chat-messages {
@@ -96,7 +115,6 @@
             line-height: 1.4;
         }
         
-        /* 🚨 NUEVO: Estilo para el indicador de tecleo */
         #typing-indicator {
             padding: 5px 10px; 
             font-style: italic; 
@@ -203,7 +221,9 @@
 
     <div id="chat-container" style="display:none;">
         <div id="chat-header">
+            <span style="visibility:hidden;">Salir</span>
             Chat Privado IMP Server - <span id="current-alias"></span>
+            <button id="logout-button" onclick="logout()">Salir</button>
         </div>
         
         <div id="chat-messages">
@@ -237,7 +257,6 @@
             "milagroscon4@gmail.com": { alias: "Aye Russu", rank: "Miembro" } 
         };
 
-        // 🚨 RANGOS CON PERMISO PARA ELIMINAR MENSAJES
         const ADMIN_RANKS = ["Fundador", "Líder"];
 
         let currentUser = null; 
@@ -245,7 +264,6 @@
         let connectionErrorShown = false; 
         let selectedFile = null; 
         
-        // 🚨 NUEVAS VARIABLES DE TECLEO
         const typingIndicatorDiv = document.getElementById('typing-indicator');
         let typingTimer = null; 
 
@@ -266,13 +284,19 @@
         // 1. LÓGICA DE INICIO Y PERMISOS
         // ----------------------------------------------------
 
-        function login() {
-            const username = document.getElementById('username-input').value.trim();
+        function login(userKey) {
+            const username = userKey || document.getElementById('username-input').value.trim();
             const errorDiv = document.getElementById('login-error');
             errorDiv.textContent = '';
 
             if (USER_DATA[username]) {
                 currentUser = USER_DATA[username];
+                
+                // 🚨 GUARDAR SESIÓN EN LOCALSTORAGE
+                localStorage.setItem('chat_user_key', username);
+                localStorage.setItem('chat_user_alias', currentUser.alias);
+                localStorage.setItem('chat_user_rank', currentUser.rank);
+
                 document.getElementById('current-alias').textContent = currentUser.alias + ' (' + currentUser.rank + ')';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('chat-container').style.display = 'flex';
@@ -285,6 +309,26 @@
             } else {
                 errorDiv.textContent = '❌ Clave secreta/Usuario incorrecto. Intenta de nuevo.';
             }
+        }
+        
+        function checkAutoLogin() {
+            const savedKey = localStorage.getItem('chat_user_key');
+            if (savedKey && USER_DATA[savedKey]) {
+                // Si encontramos una clave válida, iniciamos sesión automáticamente
+                login(savedKey);
+            } else {
+                // Si no, forzamos el foco en el campo de la clave
+                document.getElementById('username-input').focus();
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('chat_user_key');
+            localStorage.removeItem('chat_user_alias');
+            localStorage.removeItem('chat_user_rank');
+            
+            currentUser = null;
+            location.reload(); // Recargar para volver a la pantalla de login
         }
         
         function requestNotificationPermission() {
@@ -338,7 +382,6 @@
             document.getElementById('message-input').placeholder = 'Escribe tu mensaje o agrega un archivo...';
         }
 
-        // FUNCIÓN PARA ELIMINAR MENSAJES
         async function deleteMessage(messageId) {
             if (!confirm("¿Estás seguro de que quieres eliminar este mensaje?")) {
                 return;
@@ -351,7 +394,7 @@
 
                 if (response.ok) {
                     console.log(`Mensaje ${messageId} eliminado correctamente.`);
-                    fetchMessages(); // Recargar el chat
+                    fetchMessages(); 
                 } else {
                     console.error('Error al eliminar mensaje:', response.statusText);
                     alert('No se pudo eliminar el mensaje.');
@@ -367,23 +410,19 @@
         // 3. LÓGICA DE ENVÍO Y RECEPCIÓN
         // ----------------------------------------------------
         
-        // 🚨 NUEVA FUNCIÓN: Enviar señal de tecleo al servidor
         function sendTypingSignal() {
             if (!currentUser) return;
 
-            // Reinicia el temporizador si ya estaba activo
             if (typingTimer) {
                 clearTimeout(typingTimer);
             }
             
-            // Envía la señal al servidor
             fetch(SERVER_URL + '/typing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ alias: currentUser.alias })
             }).catch(error => { console.warn('Error al enviar señal de tecleo:', error); });
             
-            // Frena la señal después de un corto tiempo de inactividad
             typingTimer = setTimeout(() => {
                 typingTimer = null;
             }, 3000); 
@@ -430,7 +469,6 @@
             }
         }
         
-        // 🚨 NUEVA FUNCIÓN: Obtener y mostrar quién está tecleando
         function fetchTypingStatus() {
             fetch(SERVER_URL + '/typing')
                 .then(response => {
@@ -438,7 +476,6 @@
                     return response.json();
                 })
                 .then(typingAliases => {
-                    // Filtra tu propio alias
                     const othersTyping = typingAliases.filter(alias => alias !== currentUser.alias);
                     
                     if (othersTyping.length > 0) {
@@ -465,7 +502,6 @@
                 .then(messages => {
                     if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
                     
-                    // 🚨 Llamamos a la función de estado de tecleo en cada polling
                     fetchTypingStatus(); 
 
                     if (messages.length > lastMessageCount) {
@@ -611,7 +647,6 @@
         // Eventos de teclado y carga inicial
         document.getElementById('username-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { login(); } });
         
-        // 🚨 Evento de tecleo modificado para enviar la señal
         document.getElementById('message-input').addEventListener('keypress', function(e) { 
             if (e.key !== 'Enter') {
                 sendTypingSignal();
@@ -620,7 +655,8 @@
             }
         });
         
-        window.onload = function() { document.getElementById('username-input').focus(); };
+        // 🚨 CHEQUEO DE INICIO DE SESIÓN AL CARGAR
+        window.onload = function() { checkAutoLogin(); };
         
     </script>
 </body>
