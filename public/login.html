@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - IMP Server</title>
+
+    <!-- METATAGS PARA ASPECTO DE APP -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e1e1e"> 
+
+    <!-- ENLACE A LOS ESTILOS ESPECÍFICOS DEL LOGIN -->
+    <link rel="stylesheet" href="style-login.css"> 
+</head>
+<body>
+
+    <!-- Pantalla de Inicio de Sesión (Login) -->
+    <div id="login-screen">
+        <div id="login-form">
+            <h2>Ingresar al Chat IMP Server</h2>
+            <p>⚠️ El **Usuario** es la **Clave Secreta** para acceder.</p>
+            <input type="text" id="username-input" placeholder="Ingresa tu Clave Secreta/Usuario">
+            <button id="login-button" onclick="login()">Acceder</button>
+            <div id="login-error"></div>
+        </div>
+    </div>
+    
+    <!-- ENLACE AL ARCHIVO DE LÓGICA GENERAL -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Inicializar el foco al cargar la página de login
+        window.onload = function() { 
+            // Esto asegura que la página de chat no se muestre por accidente
+            document.getElementById('login-screen').style.display = 'flex'; 
+            document.getElementById('username-input').focus(); 
+            
+            // Evento de teclado para login
+            document.getElementById('username-input').addEventListener('keypress', function(e) { 
+                if (e.key === 'Enter') { 
+                    login(); 
+                } 
+            });
+            
+            // Llamar a la función de chequeo de sesión al cargar. 
+            // Si la sesión existe, nos redirigirá a index.html
+            checkSessionAndRedirect(); 
+        };
+    </script>
+</body>
+</html>
