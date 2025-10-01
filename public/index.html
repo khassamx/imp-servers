@@ -95,6 +95,16 @@
             margin-bottom: 8px;
             line-height: 1.4;
         }
+        
+        /* 🚨 NUEVO: Estilo para el indicador de tecleo */
+        #typing-indicator {
+            padding: 5px 10px; 
+            font-style: italic; 
+            color: #b3b3b3; 
+            min-height: 20px;
+            background-color: #1e1e1e;
+            border-top: 1px solid #3a3a3a;
+        }
 
         #focus-container {
             position: fixed;
@@ -199,6 +209,9 @@
         <div id="chat-messages">
             </div>
         
+        <div id="typing-indicator">
+            </div>
+        
         <div id="chat-input-area">
             <input type="file" id="file-input" style="display:none;" onchange="handleFileSelection()">
             <button id="attach-button" onclick="document.getElementById('file-input').click()">📎</button>
@@ -231,8 +244,12 @@
         const messagesDiv = document.getElementById('chat-messages');
         let connectionErrorShown = false; 
         let selectedFile = null; 
+        
+        // 🚨 NUEVAS VARIABLES DE TECLEO
+        const typingIndicatorDiv = document.getElementById('typing-indicator');
+        let typingTimer = null; 
 
-        // Lógica de URL corregida (Sin puerto 3000 en HTTPS)
+        // Lógica de URL corregida
         const protocol = window.location.protocol; 
         const hostname = window.location.hostname;
         let apiHost = hostname;
@@ -321,7 +338,7 @@
             document.getElementById('message-input').placeholder = 'Escribe tu mensaje o agrega un archivo...';
         }
 
-        // 🚨 FUNCIÓN PARA ELIMINAR MENSAJES
+        // FUNCIÓN PARA ELIMINAR MENSAJES
         async function deleteMessage(messageId) {
             if (!confirm("¿Estás seguro de que quieres eliminar este mensaje?")) {
                 return;
@@ -349,6 +366,28 @@
         // ----------------------------------------------------
         // 3. LÓGICA DE ENVÍO Y RECEPCIÓN
         // ----------------------------------------------------
+        
+        // 🚨 NUEVA FUNCIÓN: Enviar señal de tecleo al servidor
+        function sendTypingSignal() {
+            if (!currentUser) return;
+
+            // Reinicia el temporizador si ya estaba activo
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+            }
+            
+            // Envía la señal al servidor
+            fetch(SERVER_URL + '/typing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ alias: currentUser.alias })
+            }).catch(error => { console.warn('Error al enviar señal de tecleo:', error); });
+            
+            // Frena la señal después de un corto tiempo de inactividad
+            typingTimer = setTimeout(() => {
+                typingTimer = null;
+            }, 3000); 
+        }
 
         async function sendMessage() {
             const input = document.getElementById('message-input');
@@ -390,6 +429,32 @@
                 alert('No se pudo completar el envío: ' + error.message);
             }
         }
+        
+        // 🚨 NUEVA FUNCIÓN: Obtener y mostrar quién está tecleando
+        function fetchTypingStatus() {
+            fetch(SERVER_URL + '/typing')
+                .then(response => {
+                    if (!response.ok) throw new Error('Fallo al obtener estado de tecleo.');
+                    return response.json();
+                })
+                .then(typingAliases => {
+                    // Filtra tu propio alias
+                    const othersTyping = typingAliases.filter(alias => alias !== currentUser.alias);
+                    
+                    if (othersTyping.length > 0) {
+                        const aliases = othersTyping.join(', ');
+                        let text = `${aliases} está escribiendo...`;
+                        if (othersTyping.length > 1) {
+                            text = `${aliases} están escribiendo...`;
+                        }
+                        typingIndicatorDiv.textContent = text;
+                    } else {
+                        typingIndicatorDiv.textContent = '';
+                    }
+                })
+                .catch(error => { console.warn('Error al obtener tecleo:', error); });
+        }
+
 
         function fetchMessages() {
             fetch(SERVER_URL + '/messages')
@@ -400,6 +465,9 @@
                 .then(messages => {
                     if (connectionErrorShown) { removeConnectionError(); connectionErrorShown = false; }
                     
+                    // 🚨 Llamamos a la función de estado de tecleo en cada polling
+                    fetchTypingStatus(); 
+
                     if (messages.length > lastMessageCount) {
                         const newMessage = messages[messages.length - 1]; 
                         displaySystemNotification(newMessage); 
@@ -430,7 +498,7 @@
         
         function displayMessages(messages) {
             messagesDiv.innerHTML = ''; 
-            // Comprueba si el usuario conectado tiene un rango de administrador
+            
             const isCurrentUserAdmin = ADMIN_RANKS.includes(currentUser.rank); 
             
             messages.forEach(msg => {
@@ -454,7 +522,7 @@
                 headerContainer.appendChild(rankSpan);
                 headerContainer.appendChild(aliasSpan);
                 
-                // 🚨 BOTÓN DE ELIMINAR (Solo para Admins)
+                // 2. BOTÓN DE ELIMINAR (Solo para Admins)
                 if (isCurrentUserAdmin && msg.id) {
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = '❌';
@@ -471,7 +539,7 @@
                 
                 messageEntry.appendChild(headerContainer);
 
-                // 2. Contenido del Mensaje
+                // 3. Contenido del Mensaje
                 const contentContainer = document.createElement('span');
                 
                 if (msg.fileUrl) {
@@ -542,7 +610,16 @@
 
         // Eventos de teclado y carga inicial
         document.getElementById('username-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { login(); } });
-        document.getElementById('message-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') { sendMessage(); } });
+        
+        // 🚨 Evento de tecleo modificado para enviar la señal
+        document.getElementById('message-input').addEventListener('keypress', function(e) { 
+            if (e.key !== 'Enter') {
+                sendTypingSignal();
+            } else {
+                sendMessage(); 
+            }
+        });
+        
         window.onload = function() { document.getElementById('username-input').focus(); };
         
     </script>
