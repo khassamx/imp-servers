@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Privado IMP Server</title>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e1e1e"> 
+
     <style>
         /* --------------------------------
          * 1. ESTILOS BASE Y LAYOUT
          * -------------------------------- */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #121212; /* Fondo oscuro */
-            color: #e0e0e0; /* Texto claro */
+            background-color: #121212; 
+            color: #e0e0e0; 
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -26,14 +32,14 @@
             max-width: 600px;
             width: 100%;
             margin: 0 auto;
-            border: 1px solid #333;
             background-color: #1e1e1e;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            border-radius: 8px; /* Bordes suaves */
             overflow: hidden;
         }
 
         /* --------------------------------
-         * 2. ESTILOS DE LA VENTANA DE LOGIN
+         * 2. ESTILOS DE LA VENTANA DE LOGIN (CSS MODERNIZADO)
          * -------------------------------- */
         #login-screen {
             position: fixed;
@@ -41,7 +47,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
+            background-color: #121212; /* Fondo de la app */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -50,32 +56,71 @@
             z-index: 1000;
         }
 
-        #login-screen input, #login-screen button {
-            padding: 12px 20px;
-            margin: 8px 0;
-            border: 1px solid #444;
-            border-radius: 4px;
+        #login-form {
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 350px;
+            transition: transform 0.3s;
+        }
+        
+        #login-form:hover {
+            transform: translateY(-2px); /* Efecto 3D al pasar el mouse/tocar */
+        }
+        
+        #login-screen h2 {
+            color: #00BFFF; /* Color de Atlas, para resaltar */
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.4);
+        }
+
+        #login-screen p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        #username-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3a3a3a;
+            border-radius: 6px;
             box-sizing: border-box;
             background-color: #2c2c2c;
             color: #e0e0e0;
-            width: 80%;
-            max-width: 300px;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #username-input:focus {
+            border-color: #007bff; /* Resalte al enfocarse */
+            outline: none;
         }
         
-        #login-screen button {
-            background-color: #007bff;
+        #login-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #28a745; /* Verde fuerte */
+            color: white;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
             transition: background-color 0.3s;
         }
 
-        #login-screen button:hover {
-            background-color: #0056b3;
+        #login-button:hover {
+            background-color: #1e8736;
         }
 
         #login-error {
             color: #ff4d4d;
-            margin-top: 10px;
+            margin-top: 15px;
             font-weight: bold;
         }
 
@@ -83,12 +128,12 @@
          * 3. ESTILOS DEL CHAT Y RANGOS
          * -------------------------------- */
         #chat-header {
-            padding: 10px;
+            padding: 15px;
             background-color: #282828;
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
             text-align: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #3a3a3a;
         }
 
         #chat-messages {
@@ -101,80 +146,82 @@
         .message-entry {
             margin-bottom: 8px;
             line-height: 1.4;
+            animation: fadeIn 0.3s ease-in-out;
         }
         
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         #chat-messages .rank-tag { 
             margin-right: 5px; 
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
             font-weight: bold;
+            display: inline-block;
         }
 
         #chat-input-area {
             display: flex;
             padding: 10px;
-            border-top: 1px solid #333;
+            border-top: 1px solid #3a3a3a;
             background-color: #282828;
         }
 
         #message-input {
             flex-grow: 1;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #444;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #333;
             color: #e0e0e0;
             margin-right: 10px;
         }
 
         #send-button {
-            padding: 10px 15px;
+            padding: 12px 18px;
             background-color: #28a745;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: bold;
             transition: background-color 0.3s;
         }
 
         #send-button:hover {
-            background-color: #1e7e34;
+            background-color: #1e8734;
         }
 
-        /* Colores para Rangos (CARGO EN EL CHAT) */
+        /* Colores para Rangos (Jerarquía) */
         
-        /* MÁXIMA JERARQUÍA */
         .rank-Fundador { 
-            color: #FF00FF; /* Fucsia Brillante */
+            color: #FF00FF; 
             font-weight: bold; 
-            text-shadow: 0 0 5px #FF00FF; /* Efecto neón suave */
+            text-shadow: 0 0 5px #FF00FF; 
         } 
         
-        /* SEGUNDA JERARQUÍA */
         .rank-Líder { 
-            color: #FF4500; /* Naranja-Rojo */
+            color: #FF4500; 
             font-weight: bold; 
         } 
         
-        /* TERCERA JERARQUÍA */
         .rank-Colíder { 
-            color: #FFD700; /* Dorado Clásico */
+            color: #FFD700; 
             font-weight: bold; 
         } 
         
-        /* CUARTA JERARQUÍA */
         .rank-Atlas { 
-            color: #00BFFF; /* Azul Cielo Profundo */
+            color: #00BFFF; 
             font-weight: bold; 
         } 
         
-        /* OTROS MIEMBROS */
         .rank-Miembro { 
-            color: #8A2BE2; /* Azul Violeta */
+            color: #8A2BE2; 
         } 
         
-        /* SISTEMA */
         .rank-System { color: #999; }
 
     </style>
@@ -182,11 +229,13 @@
 <body>
 
     <div id="login-screen">
-        <h2>Ingresar al Chat IMP Server</h2>
-        <p>⚠️ El **Usuario** es la **Clave Secreta** para acceder.</p>
-        <input type="text" id="username-input" placeholder="Ingresa tu Clave Secreta/Usuario">
-        <button onclick="login()">Acceder</button>
-        <div id="login-error"></div>
+        <div id="login-form">
+            <h2>Ingresar al Chat IMP Server</h2>
+            <p>⚠️ El **Usuario** es la **Clave Secreta** para acceder.</p>
+            <input type="text" id="username-input" placeholder="Ingresa tu Clave Secreta/Usuario">
+            <button id="login-button" onclick="login()">Acceder</button>
+            <div id="login-error"></div>
+        </div>
     </div>
 
     <div id="chat-container" style="display:none;">
@@ -208,19 +257,10 @@
         // 🔑 DATA DE USUARIOS Y RANGOS (Claves de Acceso)
         // ----------------------------------------------------
         const USER_DATA = {
-            // FUNDADOR
             "Keko1283": { alias: "Khassam", rank: "Fundador" }, 
-            
-            // LÍDER
             "Titan12831283": { alias: "Titán IMP", rank: "Líder" }, 
-            
-            // COLÍDER
             "Naim12831283": { alias: "Naim Russu", rank: "Colíder" }, 
-            
-            // ATLAS
             "Atlas12831283": { alias: "Atlas", rank: "Atlas" },
-            
-            // MIEMBRO
             "milagroscon4@gmail.com": { alias: "Aye Russu", rank: "Miembro" } 
         };
 
@@ -253,6 +293,11 @@
         }
 
         // Evento para enviar mensaje con la tecla ENTER
+        document.getElementById('username-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
         document.getElementById('message-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
@@ -263,7 +308,6 @@
         // 2. LÓGICA DE MENSAJES
         // ----------------------------------------------------
 
-        // Función para enviar mensajes al servidor (POST /messages)
         function sendMessage() {
             const input = document.getElementById('message-input');
             const text = input.value.trim();
@@ -285,8 +329,8 @@
             })
             .then(response => {
                 if (response.ok) {
-                    input.value = ''; // Limpiar el input
-                    fetchMessages(); // Recargar mensajes después de enviar
+                    input.value = ''; 
+                    fetchMessages(); 
                 } else {
                     console.error('Error al enviar mensaje:', response.statusText);
                 }
@@ -294,7 +338,6 @@
             .catch(error => console.error('Error de red al enviar mensaje:', error));
         }
 
-        // Función para obtener mensajes del servidor (GET /messages)
         let lastMessageCount = 0;
 
         function fetchMessages() {
@@ -308,31 +351,27 @@
                 })
                 .catch(error => {
                     console.error('Error al cargar mensajes:', error);
-                    // Muestra un error visible si el servidor cae
                     if (messagesDiv.innerHTML.indexOf('ERROR DE CONEXIÓN') === -1) {
-                         messagesDiv.innerHTML += '<div style="color:red;">❌ ERROR DE CONEXIÓN CON EL SERVIDOR.</div>';
+                         messagesDiv.innerHTML += '<div style="color:red; font-weight:bold;">❌ ERROR DE CONEXIÓN CON EL SERVIDOR.</div>';
                     }
                 });
         }
 
-        // Función para renderizar los mensajes
         function displayMessages(messages) {
-            messagesDiv.innerHTML = ''; // Limpiar la lista actual
+            messagesDiv.innerHTML = ''; 
             
             messages.forEach(msg => {
                 const messageEntry = document.createElement('div');
                 messageEntry.className = 'message-entry';
                 
-                // 1. Etiqueta de Rango
                 const rankSpan = document.createElement('span');
-                rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); // Para usar clases como rank-Fundador
+                rankSpan.className = 'rank-tag rank-' + msg.rank.replace(/\s/g, ''); 
                 rankSpan.textContent = '[' + msg.rank + ']';
                 
-                // 2. Alias
                 const aliasSpan = document.createElement('b');
                 aliasSpan.textContent = msg.alias;
+                aliasSpan.style.color = '#fff'; // Asegurar alias blanco
                 
-                // 3. Contenido del mensaje
                 const textNode = document.createTextNode(': ' + msg.text);
                 
                 messageEntry.appendChild(rankSpan);
@@ -342,11 +381,9 @@
                 messagesDiv.appendChild(messageEntry);
             });
             
-            // Auto-scroll al final
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // Inicializa el chat al cargar la página
         window.onload = function() {
             document.getElementById('username-input').focus();
         };
