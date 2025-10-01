@@ -1,55 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Login IMP</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Pintura Viva</title>
+  
+  <style>
+    /*
+     * --------------------------------
+     * 1. ANIMACIONES BASE (Pintura Viva)
+     * --------------------------------
+     */
+
+    /* Define el movimiento lento del fondo */
+    @keyframes movement {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 100%; }
+    }
+
+    /* Define el parpadeo de estrellas */
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.7); }
+    }
+    
+    /*
+     * --------------------------------
+     * 2. CUERPO (FONDO GALÁCTICO VIVO)
+     * --------------------------------
+     */
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+
+      /* Gradiente base y movimiento */
+      background: radial-gradient(circle at 30% 30%, #ff69b470, transparent 30%),
+                  radial-gradient(circle at 70% 70%, #00ffff70, transparent 30%),
+                  linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      background-blend-mode: screen;
+      background-size: 300% 300%;
+      animation: movement 60s linear infinite alternate;
+    }
+
+    /* Pseudo-elemento para crear el efecto de estrellas */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-radial-gradient(
+        #ffffff80, 
+        #ffffff80 1px, 
+        transparent 1px, 
+        transparent 20px
+      );
+      background-size: 20px 20px;
+      animation: twinkle 5s ease-in-out infinite alternate;
+      z-index: -1;
+    }
+
+    /* * --------------------------------
+     * 3. CONTENEDOR DE LOGIN
+     * --------------------------------
+     */
+    .login-container {
+      background: rgba(0,0,0,0.85);
+      padding: 30px 40px;
+      border-radius: 15px;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 0 40px #ff69b4;
+      border: 1px solid #00ffff;
+      z-index: 10;
+      max-width: 350px; /* Tamaño fijo para el login */
+      width: 90%;
+    }
+
+    /* Estilos de título */
+    h1 {
+        margin-bottom: 25px;
+        color: #00ffff;
+    }
+
+    /* Inputs y botón */
+    input {
+      width: calc(100% - 20px); /* Ajuste por padding */
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: #fff;
+      font-size: 1em;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #ff69b4;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      font-size: 1em;
+    }
+
+    button:hover {
+      background: #ff1493;
+      box-shadow: 0 0 10px #ff1493;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>🔒 Ingreso al Servidor IMP</h2>
-    <input type="text" id="username" placeholder="Usuario (Ej. Oliver)" autocomplete="off">
-    
-    <input type="password" id="password" placeholder="Contraseña" style="display:none;" autocomplete="off"> 
-    
-    <button onclick="login()">Entrar</button>
-    <p id="error"></p>
+  <div class="login-container">
+    <h1>Iniciar Sesión</h1>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Usuario (admin)" required>
+      <input type="password" id="password" placeholder="Contraseña (1234)" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="message"></p>
   </div>
 
   <script>
-    async function login() {
-      // Solo necesitamos el valor de 'username'
-      let username = document.getElementById("username").value; 
+    // Login simulado en frontend
+    const loginForm = document.getElementById("loginForm");
+    const message = document.getElementById("message");
+
+    // Credenciales simuladas
+    const USER = "admin";
+    const PASS = "1234";
+
+    loginForm.addEventListener("submit", function(e){
+      e.preventDefault();
       
-      // La contraseña ya no se usa, pero la función fetch debe enviarla (vacía) por si acaso.
-      let password = ""; 
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
-      let res = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-
-      let data = await res.json();
-      if (data.success) {
-        // 1. Guardamos el ALIAS ('Keko') que se usará en el chat
-        localStorage.setItem("username", data.chatAlias); 
-        // 2. Guardamos el nombre real de ingreso si lo necesitas (opcional)
-        localStorage.setItem("inputUsername", data.inputUsername);
+      if(username === USER && password === PASS){
+        message.textContent = "✅ Bienvenido!";
+        message.style.color = "lightgreen";
         
-        window.location.href = "/chat.html";
+        // Simulación: Guardar estado y redirigir
+        localStorage.setItem('loggedIn', 'true');
+        // window.location.href = 'chat.html'; // Descomentar para redirigir al chat real
+        
       } else {
-        document.getElementById("error").innerText = "❌ Usuario no encontrado o inválido";
-      }
-    }
-    
-    // --- LÓGICA PARA LA TECLA ENTER ---
-    // Ahora el evento se adjunta al campo de usuario, ya que es el último visible
-    document.getElementById("username").addEventListener("keypress", function(event) {
-      if (event.key === 'Enter') { 
-        login();
+        message.textContent = "❌ Usuario o contraseña incorrectos";
+        message.style.color = "red";
       }
     });
-</script>
+    
+    // Función para manejar la tecla Enter al estar en la contraseña
+    document.getElementById("password").addEventListener("keypress", function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Previene la acción por defecto del formulario (solo para ser extra seguro)
+            loginForm.dispatchEvent(new Event('submit')); // Dispara la lógica del formulario
+        }
+    });
+
+  </script>
 </body>
 </html>
