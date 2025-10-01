@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat IMP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>💀 Chat IMP</h2>
+  <div id="messages"></div>
+  <input type="text" id="msg" placeholder="Escribe un mensaje...">
+  <button onclick="sendMessage()">Enviar</button>
+
+  <script>
+    let username = localStorage.getItem("username");
+    if (!username) window.location.href = "/";
+    
+    // Almacena el número de mensajes que ya tenemos
+    let currentMessageCount = 0; 
+    let messagesContainer = document.getElementById("messages");
+
+    async function loadMessages() {
+      // 1. Pedir mensajes nuevos (desde el conteo actual)
+      let res = await fetch(`/messages?lastIndex=${currentMessageCount}`);
+      let data = await res.json();
+      
+      const newMessages = data.messages;
+
+      // 2. Si hay mensajes nuevos, añadirlos
+      if (newMessages.length > 0) {
+          const html = newMessages.map(m => 
+              `<p><b>${m.username}</b>: ${m.translatedText} <small>[${m.text}]</small></p>`
+          ).join("");
+          
+          // Agrega solo el HTML de los mensajes nuevos al contenedor
+          messagesContainer.innerHTML += html;
+          
+          // 3. Actualizar el conteo y hacer scroll
+          currentMessageCount = data.totalCount;
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }
+
+    async function sendMessage() {
+      let text = document.getElementById("msg").value;
+      if (!text.trim()) return; // Usamos trim() para evitar mensajes solo con espacios
+
+      await fetch("/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, text })
+      });
+
+      document.getElementById("msg").value = "";
+      // Cargamos mensajes inmediatamente después de enviar para ver el nuestro
+      loadMessages(); 
+    }
+
+    // Iniciar el chequeo periódico de mensajes nuevos
+    setInterval(loadMessages, 2000); 
+    // Cargar los mensajes iniciales al entrar
+    loadMessages();
+  </script>
+</body>
+</html>
