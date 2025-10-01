@@ -12,13 +12,11 @@
      * --------------------------------
      */
 
-    /* Define el movimiento lento del fondo */
     @keyframes movement {
       0% { background-position: 0% 0%; }
       100% { background-position: 100% 100%; }
     }
 
-    /* Define el parpadeo de estrellas */
     @keyframes twinkle {
       0%, 100% { opacity: 0.8; transform: scale(1); }
       50% { opacity: 0.3; transform: scale(0.7); }
@@ -38,7 +36,6 @@
       font-family: Arial, sans-serif;
       overflow: hidden;
 
-      /* Gradiente base y movimiento */
       background: radial-gradient(circle at 30% 30%, #ff69b470, transparent 30%),
                   radial-gradient(circle at 70% 70%, #00ffff70, transparent 30%),
                   linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
@@ -47,7 +44,6 @@
       animation: movement 60s linear infinite alternate;
     }
 
-    /* Pseudo-elemento para crear el efecto de estrellas */
     body::before {
       content: '';
       position: absolute;
@@ -79,19 +75,22 @@
       box-shadow: 0 0 40px #ff69b4;
       border: 1px solid #00ffff;
       z-index: 10;
-      max-width: 350px; /* Tamaño fijo para el login */
+      max-width: 350px;
       width: 90%;
     }
 
-    /* Estilos de título */
     h1 {
         margin-bottom: 25px;
         color: #00ffff;
     }
 
-    /* Inputs y botón */
+    /* Ocultamos la contraseña y el botón 'submit' del formulario */
+    #password {
+        display: none; /* ¡OCULTAR CONTRASEÑA! */
+    }
+
     input {
-      width: calc(100% - 20px); /* Ajuste por padding */
+      width: calc(100% - 20px);
       padding: 10px;
       margin: 10px 0;
       border: none;
@@ -129,50 +128,51 @@
   <div class="login-container">
     <h1>Iniciar Sesión</h1>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Usuario (admin)" required>
-      <input type="password" id="password" placeholder="Contraseña (1234)" required>
+      <input type="text" id="username" placeholder="Usuario (Oliver, Keko.imp, etc.)" required>
+      <input type="password" id="password" placeholder="Contraseña (Oculta)" required> 
       <button type="submit">Entrar</button>
     </form>
     <p id="message"></p>
   </div>
 
   <script>
-    // Login simulado en frontend
     const loginForm = document.getElementById("loginForm");
     const message = document.getElementById("message");
 
-    // Credenciales simuladas
-    const USER = "admin";
-    const PASS = "1234";
+    // 🔑 Lista de usuarios válidos (simulando users.json)
+    // Todos deben estar en minúsculas para la verificación
+    const VALID_USERS = ["oliver", "keko.imp", "aye_russu", "atlas"];
 
     loginForm.addEventListener("submit", function(e){
       e.preventDefault();
       
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
+      const inputUsername = document.getElementById("username").value.trim();
+      
+      // 💡 NORMALIZACIÓN: Convertir la entrada a minúsculas
+      const normalizedUsername = inputUsername.toLowerCase(); 
 
-      if(username === USER && password === PASS){
-        message.textContent = "✅ Bienvenido!";
+      // 🔍 Verificación: Si el usuario (en minúsculas) está en la lista de válidos
+      if(VALID_USERS.includes(normalizedUsername)){
+        message.textContent = `✅ Bienvenido, ${inputUsername}!`;
         message.style.color = "lightgreen";
         
-        // Simulación: Guardar estado y redirigir
-        localStorage.setItem('loggedIn', 'true');
-        // window.location.href = 'chat.html'; // Descomentar para redirigir al chat real
+        // Simulación: Guardar el usuario (en el formato que ingresó) y redirigir
+        localStorage.setItem('currentUser', inputUsername); 
+        // window.location.href = 'chat.html'; // Descomentar si tienes el chat.html
         
       } else {
-        message.textContent = "❌ Usuario o contraseña incorrectos";
+        message.textContent = "❌ Usuario no registrado.";
         message.style.color = "red";
       }
     });
     
-    // Función para manejar la tecla Enter al estar en la contraseña
-    document.getElementById("password").addEventListener("keypress", function(event) {
+    // Función para manejar la tecla Enter
+    document.getElementById("username").addEventListener("keypress", function(event) {
         if (event.key === 'Enter') {
-            event.preventDefault(); // Previene la acción por defecto del formulario (solo para ser extra seguro)
-            loginForm.dispatchEvent(new Event('submit')); // Dispara la lógica del formulario
+            event.preventDefault();
+            loginForm.dispatchEvent(new Event('submit'));
         }
     });
-
   </script>
 </body>
 </html>
