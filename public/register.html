@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - IMP Server</title>
+
+    <!-- METATAGS PARA ASPECTO DE APP -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e1e1e"> 
+
+    <!-- ENLACE A LOS ESTILOS ESPECÍFICOS DEL REGISTRO -->
+    <link rel="stylesheet" href="style-register.css"> 
+</head>
+<body>
+
+    <!-- Pantalla de Registro -->
+    <div id="register-screen">
+        <div id="register-form">
+            <h2>Crear Cuenta IMP Server</h2>
+            
+            <input type="text" id="name-input" placeholder="Nombre Real (Privado)" required>
+            <input type="text" id="username-input" placeholder="Usuario" required>
+            <input type="password" id="password-input" placeholder="Contraseña/Clave Secreta" required>
+            <input type="text" id="alias-input" placeholder="Nombre o Apodo (visible en el grupo)" required>
+            <input type="text" id="country-input" placeholder="País de Origen" required>
+            <input type="tel" id="whatsapp-input" placeholder="Número WhatsApp" required>
+            <input type="email" id="email-input" placeholder="Correo Electrónico (Privado)" required>
+            
+            <button id="register-button" onclick="register()">Registrarse</button>
+            <div id="register-error"></div>
+            
+            <hr style="margin: 20px 0; border-color: #333;">
+            <p>¿Ya tienes cuenta? <a href="/login.html">Volver al Login</a></p>
+        </div>
+    </div>
+    
+    <!-- ENLACE AL ARCHIVO DE LÓGICA GENERAL -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Inicializar el foco al cargar la página de registro
+        window.onload = function() { 
+            document.getElementById('register-screen').style.display = 'flex'; 
+            document.getElementById('name-input').focus(); 
+            
+            // Evento de teclado para registro
+            document.getElementById('email-input').addEventListener('keypress', function(e) { 
+                if (e.key === 'Enter') { 
+                    register(); 
+                } 
+            });
+        };
+    </script>
+</body>
+</html>
