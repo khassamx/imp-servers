@@ -1,57 +1,69 @@
 [
   /* ================================== */
-  /* ========= RANGO: ADMIN (3) - Ordenado Alfabéticamente ========= */
+  /* ======= RANGO: FUNDADOR (1) ======== */
   /* ================================== */
-  { "username": "Atlas", "password": "293749292", "rank": "Admin" },
-  { "username": "Aye_Russu", "password": "hiro2025", "rank": "Admin" },
-  { "username": "Keko.imp", "password": "Gta2045", "rank": "Admin" },
+  { "username": "keko", "password": "1283", "rank": "Fundador" },
 
   /* ================================== */
-  /* ======== RANGO: MIEMBRO (97) - Ordenado Numéricamente ======= */
+  /* ======== RANGO: LÍDER (5) ========== */
   /* ================================== */
-  { "username": "Usuario_004", "password": "pass_004", "rank": "Miembro" },
-  { "username": "Usuario_005", "password": "pass_005", "rank": "Miembro" },
-  { "username": "Usuario_006", "password": "pass_006", "rank": "Miembro" },
-  { "username": "Usuario_007", "password": "pass_007", "rank": "Miembro" },
-  { "username": "Usuario_008", "password": "pass_008", "rank": "Miembro" },
-  { "username": "Usuario_009", "password": "pass_009", "rank": "Miembro" },
-  { "username": "Usuario_010", "password": "pass_010", "rank": "Miembro" },
-  { "username": "Usuario_011", "password": "pass_011", "rank": "Miembro" },
-  { "username": "Usuario_012", "password": "pass_012", "rank": "Miembro" },
-  { "username": "Usuario_013", "password": "pass_013", "rank": "Miembro" },
-  { "username": "Usuario_014", "password": "pass_014", "rank": "Miembro" },
-  { "username": "Usuario_015", "password": "pass_015", "rank": "Miembro" },
-  { "username": "Usuario_016", "password": "pass_016", "rank": "Miembro" },
-  { "username": "Usuario_017", "password": "pass_017", "rank": "Miembro" },
-  { "username": "Usuario_018", "password": "pass_018", "rank": "Miembro" },
-  { "username": "Usuario_019", "password": "pass_019", "rank": "Miembro" },
-  { "username": "Usuario_020", "password": "pass_020", "rank": "Miembro" },
-  { "username": "Usuario_021", "password": "pass_021", "rank": "Miembro" },
-  { "username": "Usuario_022", "password": "pass_022", "rank": "Miembro" },
-  { "username": "Usuario_023", "password": "pass_023", "rank": "Miembro" },
-  { "username": "Usuario_024", "password": "pass_024", "rank": "Miembro" },
-  { "username": "Usuario_025", "password": "pass_025", "rank": "Miembro" },
-  { "username": "Usuario_026", "password": "pass_026", "rank": "Miembro" },
-  { "username": "Usuario_027", "password": "pass_027", "rank": "Miembro" },
-  { "username": "Usuario_028", "password": "pass_028", "rank": "Miembro" },
-  { "username": "Usuario_029", "password": "pass_029", "rank": "Miembro" },
-  { "username": "Usuario_030", "password": "pass_030", "rank": "Miembro" },
-  { "username": "Usuario_031", "password": "pass_031", "rank": "Miembro" },
-  { "username": "Usuario_032", "password": "pass_032", "rank": "Miembro" },
-  { "username": "Usuario_033", "password": "pass_033", "rank": "Miembro" },
-  { "username": "Usuario_034", "password": "pass_034", "rank": "Miembro" },
-  { "username": "Usuario_035", "password": "pass_035", "rank": "Miembro" },
-  { "username": "Usuario_036", "password": "pass_036", "rank": "Miembro" },
-  { "username": "Usuario_037", "password": "pass_037", "rank": "Miembro" },
-  { "username": "Usuario_038", "password": "pass_038", "rank": "Miembro" },
-  { "username": "Usuario_039", "password": "pass_039", "rank": "Miembro" },
-  { "username": "Usuario_040", "password": "pass_040", "rank": "Miembro" },
-  { "username": "Usuario_041", "password": "pass_041", "rank": "Miembro" },
-  { "username": "Usuario_042", "password": "pass_042", "rank": "Miembro" },
-  { "username": "Usuario_043", "password": "pass_043", "rank": "Miembro" },
-  { "username": "Usuario_044", "password": "pass_044", "rank": "Miembro" },
-  { "username": "Usuario_045", "password": "pass_045", "rank": "Miembro" },
-  { "username": "Usuario_046", "password": "pass_046", "rank": "Miembro" },
+  { "username": "Atlas", "password": "293749292", "rank": "Líder" },
+  { "username": "Aye_Russu", "password": "hiro2025", "rank": "Líder" },
+  { "username": "Usuario_004", "password": "pass_004", "rank": "Líder" },
+  { "username": "Usuario_005", "password": "pass_005", "rank": "Líder" },
+  { "username": "Usuario_006", "password": "pass_006", "rank": "Líder" },
+  
+  /* ================================== */
+  /* ======== RANGO: COLÍDER (20) ========= */
+  /* ================================== */
+  { "username": "Usuario_007", "password": "pass_007", "rank": "Colíder" },
+  { "username": "Usuario_008", "password": "pass_008", "rank": "Colíder" },
+  { "username": "Usuario_009", "password": "pass_009", "rank": "Colíder" },
+  { "username": "Usuario_010", "password": "pass_010", "rank": "Colíder" },
+  { "username": "Usuario_011", "password": "pass_011", "rank": "Colíder" },
+  { "username": "Usuario_012", "password": "pass_012", "rank": "Colíder" },
+  { "username": "Usuario_013", "password": "pass_013", "rank": "Colíder" },
+  { "username": "Usuario_014", "password": "pass_014", "rank": "Colíder" },
+  { "username": "Usuario_015", "password": "pass_015", "rank": "Colíder" },
+  { "username": "Usuario_016", "password": "pass_016", "rank": "Colíder" },
+  { "username": "Usuario_017", "password": "pass_017", "rank": "Colíder" },
+  { "username": "Usuario_018", "password": "pass_018", "rank": "Colíder" },
+  { "username": "Usuario_019", "password": "pass_019", "rank": "Colíder" },
+  { "username": "Usuario_020", "password": "pass_020", "rank": "Colíder" },
+  { "username": "Usuario_021", "password": "pass_021", "rank": "Colíder" },
+  { "username": "Usuario_022", "password": "pass_022", "rank": "Colíder" },
+  { "username": "Usuario_023", "password": "pass_023", "rank": "Colíder" },
+  { "username": "Usuario_024", "password": "pass_024", "rank": "Colíder" },
+  { "username": "Usuario_025", "password": "pass_025", "rank": "Colíder" },
+  { "username": "Usuario_026", "password": "pass_026", "rank": "Colíder" },
+
+  /* ================================== */
+  /* ======== RANGO: VETERANO (20) ======== */
+  /* ================================== */
+  { "username": "Usuario_027", "password": "pass_027", "rank": "Veterano" },
+  { "username": "Usuario_028", "password": "pass_028", "rank": "Veterano" },
+  { "username": "Usuario_029", "password": "pass_029", "rank": "Veterano" },
+  { "username": "Usuario_030", "password": "pass_030", "rank": "Veterano" },
+  { "username": "Usuario_031", "password": "pass_031", "rank": "Veterano" },
+  { "username": "Usuario_032", "password": "pass_032", "rank": "Veterano" },
+  { "username": "Usuario_033", "password": "pass_033", "rank": "Veterano" },
+  { "username": "Usuario_034", "password": "pass_034", "rank": "Veterano" },
+  { "username": "Usuario_035", "password": "pass_035", "rank": "Veterano" },
+  { "username": "Usuario_036", "password": "pass_036", "rank": "Veterano" },
+  { "username": "Usuario_037", "password": "pass_037", "rank": "Veterano" },
+  { "username": "Usuario_038", "password": "pass_038", "rank": "Veterano" },
+  { "username": "Usuario_039", "password": "pass_039", "rank": "Veterano" },
+  { "username": "Usuario_040", "password": "pass_040", "rank": "Veterano" },
+  { "username": "Usuario_041", "password": "pass_041", "rank": "Veterano" },
+  { "username": "Usuario_042", "password": "pass_042", "rank": "Veterano" },
+  { "username": "Usuario_043", "password": "pass_043", "rank": "Veterano" },
+  { "username": "Usuario_044", "password": "pass_044", "rank": "Veterano" },
+  { "username": "Usuario_045", "password": "pass_045", "rank": "Veterano" },
+  { "username": "Usuario_046", "password": "pass_046", "rank": "Veterano" },
+
+  /* ================================== */
+  /* ======== RANGO: MIEMBRO (54) ========= */
+  /* ================================== */
   { "username": "Usuario_047", "password": "pass_047", "rank": "Miembro" },
   { "username": "Usuario_048", "password": "pass_048", "rank": "Miembro" },
   { "username": "Usuario_049", "password": "pass_049", "rank": "Miembro" },
