@@ -1,54 +1,49 @@
-// Servidor de Chat Persistente con Node.js y Express (Optimizado para Termux)
-// Este código maneja la persistencia de los mensajes en el archivo 'messages.json'.
+// Servidor de Chat Persistente con Node.js y Express
+// 💡 SOLUCIÓN FINAL para 'Cannot GET /' y Persistencia
 
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const app = express();
 const port = 3000;
-const HOST = '0.0.0.0'; // Escucha en todas las interfaces para acceso externo
+const HOST = '0.0.0.0'; 
 
 // ----------------------------------------------------
-// Configuración
+// 1. CONFIGURACIÓN CRUCIAL (Soluciona 'Cannot GET /')
 // ----------------------------------------------------
 
 // Middleware para parsear JSON de las peticiones POST
 app.use(express.json());
 
-// Servir archivos estáticos (index.html, CSS, etc.) desde la carpeta actual
-app.use(express.static(path.join(__dirname)));
+// 💡 LÍNEA CLAVE: Indica a Express que debe buscar archivos estáticos
+// (como index.html, CSS, JS) dentro de la carpeta 'public'.
+app.use(express.static(path.join(__dirname, 'public'))); 
 
 // Ruta del archivo de mensajes (persistencia de datos)
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');
 
 // ----------------------------------------------------
-// Funciones de Persistencia (FileSystem)
+// 2. Funciones de Persistencia
 // ----------------------------------------------------
 
-/**
- * Carga el array de mensajes desde messages.json.
- * Si el archivo no existe o está vacío, retorna un array vacío.
- */
 function loadMessages() {
     try {
+        // Lee y parsea el historial de mensajes
         const data = fs.readFileSync(MESSAGES_FILE, 'utf8');
         return JSON.parse(data);
     } catch (error) {
-        // Ignorar error si el archivo no existe (simplemente es la primera vez)
+        // Si el archivo no existe o falla, retorna un array vacío
         return [];
     }
 }
 
-/**
- * Guarda el array completo de mensajes en messages.json.
- */
 function saveMessages(messages) {
-    // Usamos null, 2 para formatear el JSON, haciéndolo legible en el archivo.
+    // Guarda el array completo de mensajes en messages.json
     fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
 }
 
 // ----------------------------------------------------
-// ENDPOINTS (Rutas) del Chat
+// 3. ENDPOINTS (Rutas de API para el Chat)
 // ----------------------------------------------------
 
 // 1. GET /messages: Retorna todo el historial de mensajes
@@ -57,7 +52,7 @@ app.get('/messages', (req, res) => {
     res.json(messages);
 });
 
-// 2. POST /messages: Recibe un nuevo mensaje desde el frontend y lo guarda
+// 2. POST /messages: Recibe un nuevo mensaje y lo guarda
 app.post('/messages', (req, res) => {
     const newMessage = req.body;
     
@@ -68,24 +63,22 @@ app.post('/messages', (req, res) => {
     
     const messages = loadMessages();
     
-    // Añadir el mensaje y la marca de tiempo (opcional, pero útil)
+    // Añadir el mensaje con marca de tiempo
     messages.push({ ...newMessage, timestamp: new Date().toISOString() });
     
     saveMessages(messages);
     
-    // 💡 IMPORTANTE: Devolvemos el array completo al frontend.
-    // Aunque el frontend solo necesita un 201 OK, devolver el array puede ser útil.
+    // Devolvemos un status 201 (Created)
     res.status(201).json(messages); 
 });
 
 // ----------------------------------------------------
-// Inicio del Servidor
+// 4. Inicio del Servidor
 // ----------------------------------------------------
 
 app.listen(port, HOST, () => {
     console.log(`\n======================================================`);
-    console.log(` ✅ Servidor de Chat (Node.js/Express) CORRIENDO en Termux`);
-    console.log(` 🌐 Acceso Habilitado en puerto: ${port}`);
-    console.log(` 🔑 COMPARTIR con otros usando: http://[TU_IP_LOCAL]:${port}`);
+    console.log(` ✅ Servidor de Chat (Node.js/Express) INICIADO`);
+    console.log(` 🔑 COMPARTIR USANDO: http://192.168.100.101:${port}`);
     console.log(`======================================================\n`);
 });
