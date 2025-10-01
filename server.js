@@ -10,7 +10,9 @@ const PORT = 3000;
 // Rutas de archivos
 const MESSAGES_FILE = path.join(__dirname, 'messages.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
-const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+
+// La carpeta de subidas debe estar DENTRO de la carpeta 'public' para ser accesible.
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads'); 
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
 // Estado del servidor
@@ -25,7 +27,7 @@ let typingStatus = {};
 // Configuración de Multer para la subida de archivos
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, UPLOADS_DIR);
+        cb(null, UPLOADS_DIR); 
     },
     filename: (req, file, cb) => {
         const fileExt = path.extname(file.originalname);
@@ -38,9 +40,12 @@ const upload = multer({
 });
 
 app.use(express.json()); // Habilitar body-parser para JSON
-app.use(express.static(path.join(__dirname, 'public'))); // Servir archivos estáticos
 
-// Habilitar CORS para desarrollo (Necesario si el front-end y back-end tienen puertos diferentes)
+// CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS: Esto hace que todo lo que esté en 'public'
+// (incluyendo el subdirectorio 'uploads') sea accesible directamente desde la raíz /.
+app.use(express.static(path.join(__dirname, 'public'))); 
+
+// Habilitar CORS para desarrollo 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -53,7 +58,6 @@ app.use((req, res, next) => {
  */
 async function loadData() {
     try {
-        // Cargar Mensajes
         const messagesData = await fs.readFile(MESSAGES_FILE, 'utf8');
         messages = JSON.parse(messagesData);
     } catch (error) {
@@ -66,7 +70,6 @@ async function loadData() {
     }
 
     try {
-        // Cargar Usuarios
         const usersData = await fs.readFile(USERS_FILE, 'utf8');
         users = JSON.parse(usersData);
     } catch (error) {
@@ -103,7 +106,7 @@ async function saveUsers() {
 
 
 // ----------------------------------------------------
-// 2. ENDPOINTS DE AUTENTICACIÓN (NUEVOS)
+// 2. ENDPOINTS DE AUTENTICACIÓN
 // ----------------------------------------------------
 
 /**
@@ -120,11 +123,9 @@ app.post('/register', async (req, res) => {
         return res.status(409).json({ message: 'El usuario ya existe.' });
     }
     
-    // NOTA: En un sistema real, la contraseña debe ser HASHED (encriptada).
-    // Aquí la almacenamos como texto plano por simplicidad, ¡pero ten cuidado!
     users[username] = {
         name,
-        password, // PELIGRO: Usar hash en producción
+        password, 
         alias,
         country,
         whatsapp,
@@ -228,8 +229,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
         return res.status(400).json({ error: 'No se subió ningún archivo.' });
     }
 
-    // Devolvemos la URL relativa para que el cliente la use
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Devolvemos la URL RELATIVA A LA RAÍZ: /uploads/nombre_archivo
+    const fileUrl = `/uploads/${req.file.filename}`; 
     res.json({ 
         fileUrl: fileUrl, 
         originalName: req.file.originalname 
@@ -270,8 +271,23 @@ app.get('/typing', (req, res) => {
 
 
 // ----------------------------------------------------
-// 4. MANTENIMIENTO Y ARRANQUE
+// 4. MANEJO DE ERRORES Y ARRANQUE
 // ----------------------------------------------------
+
+/**
+ * CRÍTICO: Manejo de rutas no encontradas (404) para evitar el error HTML/JSON.
+ */
+app.use((req, res, next) => {
+    // Si la ruta no se encontró y la petición esperaba JSON (API), devolvemos JSON 404.
+    if (req.accepts('json')) {
+        return res.status(404).json({ message: `Ruta de API no encontrada: ${req.path}` });
+    }
+    
+    // Si la ruta no se encontró y la petición esperaba HTML (navegación), redirigimos al login.
+    // Esto es para que el Cloudflare Tunnel no devuelva un HTML de error genérico.
+    res.redirect('/login.html');
+});
+
 
 /**
  * Tarea de limpieza programada para eliminar archivos de más de 30 minutos.
@@ -284,7 +300,6 @@ async function runCleanup() {
         for (const file of files) {
             const filePath = path.join(UPLOADS_DIR, file);
             
-            // Ignorar el archivo .gitkeep si existe
             if (file === '.gitkeep') continue;
 
             const stats = await fs.stat(filePath);
@@ -298,7 +313,6 @@ async function runCleanup() {
         if (error.code !== 'ENOENT') {
              console.error('Error en la tarea de limpieza:', error);
         } else {
-             // Si el directorio UPLOADS_DIR no existe, lo creamos
              try { await fs.mkdir(UPLOADS_DIR, { recursive: true }); } catch (e) { console.error('Fallo al crear directorio de subidas:', e); }
         }
     }
@@ -306,12 +320,32 @@ async function runCleanup() {
 
 // Inicializa el servidor
 loadData().then(() => {
-    // Asegurar que el directorio de subidas existe antes de empezar
     runCleanup(); 
-    setInterval(runCleanup, CLEANUP_INTERVAL); // Programar la limpieza periódica
+    setInterval(runCleanup, CLEANUP_INTERVAL); 
 
     app.listen(PORT, () => {
         console.log(`Servidor iniciado en http://localhost:${PORT}`);
-        console.log(`Directorio de subidas: ${UPLOADS_DIR}`);
     });
 });
+```eof
+
+---
+
+## ✅ Siguientes Pasos (Para Solucionar Todos los Errores)
+
+1.  **Reemplaza** el contenido de tu archivo **`server.js`** con el código que te acabo de proporcionar.
+2.  **Reinicia tu servidor Node.js** (`npm run dev` o `npm start`). **¡Esto es esencial!**
+
+### ⚠️ Error de Conexión Adicional (502 Bad Gateway)
+
+Respecto a la imagen del **"502 Bad Gateway"** (la primera imagen), este error indica que:
+
+* **Tu dominio de Cloudflare está funcionando.**
+* **El túnel NO ESTÁ conectado** o **el servidor Node.js NO ESTÁ corriendo en el puerto 3000** cuando Cloudflare intenta enviar el tráfico.
+
+Asegúrate de ejecutar **ambos comandos** en tu terminal (en dos sesiones diferentes o usando un gestor de procesos como `tmux` o `screen`):
+
+1.  **Iniciar el Servidor:** `npm run dev` (o `node server.js`)
+2.  **Iniciar el Túnel:** `./start_tunnel` (o el comando de `cloudflared`)
+
+Una vez que ambos estén activos, el error de `502 Bad Gateway` y el de **`Unexpected token '<'`** deberían desaparecer.
