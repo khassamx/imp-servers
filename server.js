@@ -1,12 +1,11 @@
 // =========================================================
-// 🌐 IMP CHAT SERVER v4.1: EXPRESS + SQLITE + BCRYPT
-// Soporte para Login Seguro y Persistencia de Mensajes
+// 🌐 IMP CHAT SERVER v5.0: EXPRESS + SQLITE + BCRYPT
+// Sistema robusto con persistencia en Base de Datos.
 // =========================================================
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const port = 3000;
@@ -17,8 +16,8 @@ const dbPath = path.join(__dirname, 'data', 'imp.db');
 // 🚨 CONEXIÓN A LA BASE DE DATOS
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error('❌ Error al conectar con la base de datos:', err.message);
-        // Si falla la conexión, el servidor no puede arrancar
+        // Si hay un error crítico al conectar la DB, salimos del proceso.
+        console.error('❌ Error crítico al conectar con la base de datos:', err.message);
         process.exit(1); 
     } else {
         console.log('✅ Conectado a la base de datos SQLite.');
@@ -28,41 +27,41 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // ----------------------------------------------------
 // MIDDLEWARE & RUTA ESTÁTICA
 // ----------------------------------------------------
-app.use(express.json());
-app.use(express.static(PUBLIC_DIR));
+app.use(express.json()); // Habilita la lectura de JSON en el cuerpo de las peticiones.
+app.use(express.static(PUBLIC_DIR)); // Sirve el index.html y otros archivos estáticos.
 
 
 // ----------------------------------------------------
 // 1. ENDPOINT DE REGISTRO (POST /register)
 // ----------------------------------------------------
 app.post('/register', async (req, res) => {
-    // Nota: Aquí solo guardamos username, password y un rol por defecto. 
-    // Los campos extra (país, WhatsApp) deben guardarse en tablas o campos adicionales.
+    // Usamos 'username' para el login y 'alias' para mostrar en el chat.
     const { username, password, alias } = req.body; 
 
     if (!username || !password || !alias) {
-        return res.status(400).json({ success: false, message: 'Faltan campos obligatorios.' });
+        return res.status(400).json({ success: false, message: 'Faltan campos obligatorios: Usuario, Contraseña y Alias.' });
     }
 
     try {
         const hash = await bcrypt.hash(password, 10);
-        const defaultRole = 'MIEMBRO'; // Asignar rol por defecto
+        const defaultRole = 'MIEMBRO'; 
 
         db.run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, 
                [username, hash, defaultRole], 
                function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ success: false, message: 'El usuario ya existe.' });
+                    return res.status(409).json({ success: false, message: 'El Usuario ya existe. Por favor, elige otro.' });
                 }
                 console.error("Error al insertar usuario:", err);
-                return res.status(500).json({ success: false, message: 'Error al registrar.' });
+                return res.status(500).json({ success: false, message: 'Error interno al registrar.' });
             }
+            // Devuelve el alias y rol del usuario recién creado
             return res.status(201).json({ success: true, alias: alias, role: defaultRole });
         });
     } catch (error) {
         console.error("Error de bcrypt o DB:", error);
-        res.status(500).json({ success: false, message: 'Error interno de registro.' });
+        res.status(500).json({ success: false, message: 'Error de proceso interno de registro.' });
     }
 });
 
@@ -75,13 +74,14 @@ app.post('/login', async (req, res) => {
 
     db.get(`SELECT id, username, password, role FROM users WHERE username = ?`, [username], async (err, user) => {
         if (err) return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
-        if (!user) return res.status(401).json({ success: false, message: 'Usuario no encontrado.' });
+        if (!user) return res.status(401).json({ success: false, message: 'Usuario no encontrado o clave secreta incorrecta.' });
 
         try {
+            // Compara la contraseña enviada con el hash almacenado
             const match = await bcrypt.compare(password, user.password);
 
             if (match) {
-                // Éxito: Nota: En la DB de init_db.js, el alias está en 'username'.
+                // Éxito: Nota: Usamos 'username' como el 'alias' para el chat (por la estructura de init_db.js).
                 return res.json({ success: true, alias: user.username, role: user.role });
             } else {
                 return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
@@ -95,12 +95,13 @@ app.post('/login', async (req, res) => {
 
 
 // ----------------------------------------------------
-// 3. ENDPOINTS DE MENSAJES (GET /messages, POST /messages)
+// 3. ENDPOINTS DE MENSAJES
 // ----------------------------------------------------
 
+// GET /messages: Carga el historial de mensajes
 app.get('/messages', (req, res) => {
-    // Usamos el campo 'text' de la DB como 'message' para compatibilidad con app.js
-    db.all(`SELECT id, username, role, text AS message, ts FROM messages ORDER BY ts ASC`, [], (err, rows) => {
+    // text AS message y ts AS timestamp para ser más compatible con la UI
+    db.all(`SELECT id, username, role, text AS message, ts AS timestamp FROM messages ORDER BY ts ASC`, [], (err, rows) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ error: 'Error al cargar mensajes.' });
@@ -109,14 +110,14 @@ app.get('/messages', (req, res) => {
     });
 });
 
+// POST /messages: Envía un nuevo mensaje
 app.post('/messages', (req, res) => {
-    // El frontend envía alias y role (usaremos alias como username en la DB)
     const { alias, role, text } = req.body; 
     
-    // Necesitas asegurarte de que el usuario existe antes de insertar el mensaje
+    // Buscar el ID del usuario por su alias/username
     db.get('SELECT id FROM users WHERE username = ?', [alias], (err, user) => {
         if (err || !user) {
-            return res.status(400).json({ error: 'Usuario no autenticado para enviar mensaje.' });
+            return res.status(400).json({ error: 'Usuario no autenticado o no encontrado para enviar mensaje.' });
         }
 
         const user_id = user.id;
@@ -128,7 +129,14 @@ app.post('/messages', (req, res) => {
                 console.error(err);
                 return res.status(500).json({ error: 'Error al guardar el mensaje.' });
             }
-            res.status(201).json({ id: this.lastID, alias, role, text, ts: new Date().toISOString() });
+            // Retornamos el mensaje guardado con su nuevo ID y timestamp
+            res.status(201).json({ 
+                id: this.lastID, 
+                alias, 
+                role, 
+                text, 
+                timestamp: new Date().toISOString() 
+            });
         });
     });
 });
@@ -145,7 +153,7 @@ app.listen(port, HOST, () => {
     console.log(`======================================================\n`);
 });
 
-// Cierre seguro de la base de datos
+// Cierre seguro de la base de datos al apagar el servidor (Ctrl+C)
 process.on('SIGINT', () => {
     db.close((err) => {
         if (err) console.error("Error al cerrar DB:", err.message);
