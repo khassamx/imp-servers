@@ -1,187 +1,182 @@
-/* Base Styles */
+/* =========================================================
+   ESTILOS GLOBALES Y DE BASE
+   ========================================================= */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #1a1a2e;
-    color: #e4e4e4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    background-color: #1e1e1e;
+    color: #fff;
+    font-family: Arial, sans-serif;
     margin: 0;
-}
-
-#chat-container {
-    width: 100%;
-    max-width: 800px;
-    height: 95vh;
-    background-color: #2e1a47;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
+    height: 100vh;
     overflow: hidden;
+    /* Esto es clave para centrar las vistas de autenticación */
+    justify-content: center;
+    align-items: center;
 }
 
-/* Header */
-#chat-header {
-    background: linear-gradient(90deg, #472d68, #6a3d9a);
-    padding: 15px;
-    border-bottom: 2px solid #5a3a78;
-    color: white;
+.separator {
+    margin: 20px 0;
+    border-color: #444;
+}
+
+a {
+    color: #ff69b4; /* Color de enlace IMP */
+    text-decoration: none;
+}
+
+/* =========================================================
+   ESTILOS DE AUTENTICACIÓN (Login y Registro)
+   ========================================================= */
+.auth-view {
+    height: 100vh;
+    width: 100%;
+    /* display: flex; (Se establece en el JS, pero por defecto lo definimos aquí) */
+    justify-content: center;
+    align-items: center;
+    /* Gradiente visual para el fondo de autenticación */
+    background: radial-gradient(circle at 70% 70%, #00ffff70, transparent 40%), #1e1e1e;
+    overflow-y: auto; 
+    padding: 20px 0;
+}
+
+#login-form, #register-form {
+    background-color: #333;
+    padding: 40px;
+    border-radius: 10px;
     text-align: center;
-    font-size: 1.2em;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 90%;
+    margin: auto 0;
+}
+
+.auth-view h2 {
+    color: #00ffff;
+    margin-bottom: 25px;
+}
+
+.auth-view input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    background-color: #444;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+#login-button {
+    background-color: #ff69b4; 
+    color: #fff;
+}
+
+#register-button {
+    background-color: #00ffff; 
+    color: #1e1e1e; /* Texto oscuro para el fondo claro */
+}
+
+#login-button, #register-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
     font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}
+
+/* =========================================================
+   ESTILOS DE CHAT (VISTA: #chat-view)
+   ========================================================= */
+#chat-view {
+    /* Forzar display flex para la estructura de chat */
+    display: flex !important; 
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    max-width: 600px;
+    width: 100%;
+    height: 100vh;
+    margin: 0 auto;
+}
+
+#chat-header {
+    background-color: #333;
+    padding: 15px;
+    font-weight: bold;
+    text-align: center;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-#chat-header button {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
-}
-
-#chat-header button:hover {
-    background-color: #cc0000;
-}
-
-/* Messages Area */
 #chat-messages {
     flex-grow: 1;
-    padding: 15px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Scrollbar Style */
-#chat-messages::-webkit-scrollbar {
-    width: 8px;
-}
-#chat-messages::-webkit-scrollbar-thumb {
-    background-color: #6a3d9a;
-    border-radius: 4px;
-}
-#chat-messages::-webkit-scrollbar-track {
-    background-color: #2e1a47;
-}
-
-/* Message Entry */
-.message-entry {
-    background-color: #3f265b;
     padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    word-wrap: break-word;
+    overflow-y: auto;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #444;
 }
 
-.message-entry b {
-    color: #b397d6; /* Alias color */
+.message-entry {
+    margin: 10px 0;
+    line-height: 1.4;
+    font-size: 0.9em;
 }
 
-/* Ranks */
-.rank-tag {
-    font-size: 0.8em;
-    padding: 2px 6px;
-    border-radius: 5px;
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.rank-Miembro {
-    background-color: #6a3d9a;
-    color: #e4e4e4;
-}
-.rank-Líder {
-    background-color: #ffcc00;
-    color: #333;
-}
-.rank-Fundador {
-    background-color: #cc0000;
-    color: white;
-}
-
-/* Input Area */
 #chat-input-area {
-    padding: 15px;
-    background-color: #3f265b;
-    border-top: 2px solid #5a3a78;
     display: flex;
-    gap: 10px;
+    padding: 10px;
+    background-color: #333;
     align-items: center;
 }
 
 #message-input {
     flex-grow: 1;
     padding: 10px;
-    border: 1px solid #5a3a78;
-    border-radius: 10px;
-    background-color: #472d68;
-    color: white;
-    resize: none;
-    height: 40px;
-    box-sizing: border-box;
+    border: none;
+    border-radius: 20px;
+    margin-right: 10px;
+    background-color: #1e1e1e;
+    color: #fff;
 }
 
-#send-button, #file-button {
-    background-color: #00bfff;
-    color: white;
-    border: none;
+#send-button, #attach-button, #logout-button {
     padding: 10px 15px;
-    border-radius: 10px;
+    border: none;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 1em;
+    background-color: #ff69b4; 
+    color: #fff;
+    font-weight: bold;
     transition: background-color 0.2s;
 }
 
-#send-button:hover, #file-button:hover {
-    background-color: #008fcc;
+#attach-button {
+    margin-right: 5px;
+    padding: 10px 12px;
+    background-color: #00ffff; 
+    color: #1e1e1e;
 }
 
-/* Typing Indicator and Errors */
+/* Estilos de rangos (Deben coincidir con los roles de tu init_db.js) */
+.rank-LIDER { color: #ff0000; font-weight: bold; } 
+.rank-COLIDER { color: #ffcc00; } 
+.rank-VETERANO { color: #00ff00; } 
+.rank-MIEMBRO { color: #8888ff; }
+
+/* Indicador de tecleo */
 #typing-indicator {
-    padding: 5px 15px;
-    font-size: 0.9em;
-    color: #00bfff;
-    min-height: 20px;
-}
-
-.connection-error {
-    background-color: #cc0000;
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
-    font-weight: bold;
-}
-
-/* Media/File Display */
-.media-container img, .media-container video {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    display: block;
-    margin: 5px 0;
-    border: 1px solid #5a3a78;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    #chat-container {
-        height: 100vh;
-        border-radius: 0;
-    }
-    #chat-header {
-        font-size: 1em;
-    }
-    #send-button, #file-button {
-        padding: 10px;
-    }
+    padding: 5px 10px;
+    font-size: 0.8em;
+    color: #aaa;
+    background-color: #2a2a2a;
 }
