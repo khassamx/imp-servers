@@ -1,14 +1,17 @@
+// server.js
 // =========================================================
 // 🌐 IMP CHAT SERVER v5.1: CORE (Limpieza y Modularización)
+// 🚨 Nota: La primera línea DEBE ser 'const express = require('express');' 
 // =========================================================
 const express = require('express');
 const path = require('path');
-const { closeDB } = require('./src/db'); // Importamos solo la función de cierre
-const apiRoutes = require('./src/routes'); // Importamos todas las rutas
+// Importa la función de cierre de DB y la instancia de rutas
+const { closeDB } = require('./src/db'); 
+const apiRoutes = require('./src/routes'); 
 
 const app = express();
 const port = 3000;
-const HOST = '0.0.0.0';
+const HOST = '0.0.0.0'; 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // ----------------------------------------------------
@@ -20,7 +23,7 @@ app.use(express.static(PUBLIC_DIR)); // Sirve el index.html y otros archivos est
 // ----------------------------------------------------
 // ENRUTAMIENTO (CONECTAR LAS RUTAS)
 // ----------------------------------------------------
-app.use('/', apiRoutes); // Usamos las rutas definidas en src/routes.js
+app.use('/', apiRoutes); // Todos los endpoints (/login, /register, /messages) están en apiRoutes
 
 
 // ----------------------------------------------------
@@ -36,6 +39,6 @@ app.listen(port, HOST, () => {
 
 // Cierre seguro de la base de datos al apagar el servidor (Ctrl+C)
 process.on('SIGINT', () => {
-    closeDB(); // Llama a la función de cierre de DB del módulo db.js
+    closeDB(); // Llama a la función de cierre del módulo src/db.js
     process.exit(0);
 });
