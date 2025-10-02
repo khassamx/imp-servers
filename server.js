@@ -1,11 +1,11 @@
 // server.js
 // =========================================================
-// 🌐 IMP CHAT SERVER v5.1: CORE (Limpieza y Modularización)
-// 🚨 Nota: La primera línea DEBE ser 'const express = require('express');' 
+// 🌐 IMP CHAT SERVER v5.2: CORE - LIMPIO Y MODULARIZADO
+// Este archivo inicia el servidor y conecta los módulos.
 // =========================================================
 const express = require('express');
 const path = require('path');
-// Importa la función de cierre de DB y la instancia de rutas
+// Importa la función para cerrar la DB y las rutas de la API
 const { closeDB } = require('./src/db'); 
 const apiRoutes = require('./src/routes'); 
 
@@ -17,13 +17,14 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 // ----------------------------------------------------
 // CONFIGURACIÓN Y MIDDLEWARE
 // ----------------------------------------------------
-app.use(express.json()); // Habilita la lectura de JSON
+app.use(express.json()); // Habilita la lectura de JSON para todas las peticiones POST/PUT
 app.use(express.static(PUBLIC_DIR)); // Sirve el index.html y otros archivos estáticos.
 
 // ----------------------------------------------------
-// ENRUTAMIENTO (CONECTAR LAS RUTAS)
+// ENRUTAMIENTO
 // ----------------------------------------------------
-app.use('/', apiRoutes); // Todos los endpoints (/login, /register, /messages) están en apiRoutes
+// Todas las rutas de la API (/login, /register, /messages) se manejan en src/routes.js
+app.use('/', apiRoutes); 
 
 
 // ----------------------------------------------------
@@ -37,8 +38,8 @@ app.listen(port, HOST, () => {
     console.log(`======================================================\n`);
 });
 
-// Cierre seguro de la base de datos al apagar el servidor (Ctrl+C)
+// Cierre seguro de la base de datos al apagar el servidor (detecta CTRL+C)
 process.on('SIGINT', () => {
-    closeDB(); // Llama a la función de cierre del módulo src/db.js
+    closeDB(); // Función importada de src/db.js
     process.exit(0);
 });
