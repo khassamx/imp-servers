@@ -1,7 +1,7 @@
 // src/routes.js
 const express = require('express');
 const router = express.Router(); 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // ¡CAMBIO CLAVE: Usamos la versión JS!
 const { db } = require('./db'); 
 
 // ----------------------------------------------------
@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Faltan campos obligatorios.' });
     }
     try {
-        const hash = await bcrypt.hash(password, 10);
+        const hash = await bcrypt.hash(password, 10); // bcryptjs hash
         const defaultRole = 'MIEMBRO'; 
         db.run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, 
                [username, hash, defaultRole], 
@@ -42,8 +42,9 @@ router.post('/login', async (req, res) => {
     db.get(`SELECT id, username, password, role FROM users WHERE username = ?`, [username], async (err, user) => {
         if (err) return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
         if (!user) return res.status(401).json({ success: false, message: 'Usuario no encontrado.' });
+
         try {
-            const match = await bcrypt.compare(password, user.password);
+            const match = await bcrypt.compare(password, user.password); // bcryptjs compare
             if (match) {
                 return res.json({ success: true, alias: user.username, role: user.role });
             } else {
