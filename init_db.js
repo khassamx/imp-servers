@@ -1,6 +1,8 @@
 // init_db.js
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcryptjs'); // ¡CAMBIO CLAVE: Usamos la versión JS!
+// CAMBIO CLAVE: Usamos la librería 'sqlite' más simple
+const sqlite = require('sqlite'); 
+const sqliteDriver = require('sqlite3'); // Necesario como driver para 'sqlite'
+const bcrypt = require('bcryptjs'); 
 const path = require('path');
 const fs = require('fs');
 
@@ -12,37 +14,40 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir);
 }
 
-const db = new sqlite3.Database(dbPath, async (err) => {
-    if (err) {
-        console.error('❌ Error al abrir la base de datos:', err.message);
-        return;
-    }
-    console.log(`✅ Base de datos abierta: ${dbPath}`);
-
-    // Crear la tabla de usuarios
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT NOT NULL
-    )`);
-
-    // Crear la tabla de mensajes
-    db.run(`CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        username TEXT NOT NULL,
-        role TEXT NOT NULL,
-        text TEXT NOT NULL,
-        ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id)
-    )`);
-
-    // =========================================================
-    // 🛡️ Insertar Usuarios Iniciales con Hash Seguro (bcryptjs)
-    // =========================================================
+async function initializeDatabase() {
+    let db;
     try {
-        const passwordHash = await bcrypt.hash('Gta2045', 10); // Hash de la contraseña 'Gta2045'
+        // Conexión asíncrona usando la nueva librería
+        db = await sqlite.open({
+            filename: dbPath,
+            driver: sqliteDriver.Database // Usamos el driver sqlite3 que es más fácil de instalar a veces
+        });
+
+        console.log(`✅ Base de datos abierta: ${dbPath}`);
+
+        // Crear la tabla de usuarios
+        await db.exec(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL
+        )`);
+
+        // Crear la tabla de mensajes
+        await db.exec(`CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            username TEXT NOT NULL,
+            role TEXT NOT NULL,
+            text TEXT NOT NULL,
+            ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )`);
+
+        // =========================================================
+        // 🛡️ Insertar Usuarios Iniciales con Hash Seguro (bcryptjs)
+        // =========================================================
+        const passwordHash = await bcrypt.hash('Gta2045', 10); 
         
         const usersToInsert = [
             // Usuarios (username, password, role)
@@ -51,25 +56,22 @@ const db = new sqlite3.Database(dbPath, async (err) => {
             ['Miembro01', passwordHash, 'MIEMBRO']
         ];
 
-        db.serialize(() => {
-            const stmt = db.prepare("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)");
-            usersToInsert.forEach(user => {
-                stmt.run(user);
-            });
-            stmt.finalize();
-        });
+        for (const [username, password, role] of usersToInsert) {
+            await db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+                         username, password, role);
+        }
 
         console.log('✅ Usuarios iniciales y tablas creadas/verificadas.');
 
     } catch (error) {
-        console.error('❌ Error al hashear contraseñas o insertar usuarios:', error);
+        console.error('❌ Error fatal al inicializar la base de datos:', error);
     } finally {
-        // Cerrar la conexión después de la inicialización
-        db.close((closeErr) => {
-            if (closeErr) {
-                console.error('Error al cerrar DB:', closeErr.message);
-            }
-            console.log('Base de datos cerrada.');
-        });
+        if (db) {
+            // El driver 'sqlite' no tiene un método 'close' simple, pero generalmente es manejado por Node.
+            // Para Termux, no cerraremos la DB en init_db.js para evitar errores, pero si lo haremos en server.js
+            console.log('Finalizada la inicialización.');
+        }
     }
-});
+}
+
+initializeDatabase();
