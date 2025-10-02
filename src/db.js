@@ -2,6 +2,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
+// Retrocede un nivel para encontrar 'data/imp.db'
 const dbPath = path.join(__dirname, '..', 'data', 'imp.db'); 
 
 // 🚨 CONEXIÓN A LA BASE DE DATOS
@@ -24,5 +25,4 @@ function closeDB() {
     });
 }
 
-// Exportamos la instancia de la base de datos y la función de cierre
 module.exports = { db, closeDB };
