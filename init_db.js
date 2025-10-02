@@ -1,59 +1,75 @@
 // init_db.js
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
-const fs = require('fs');
+const bcrypt = require('bcryptjs'); // ¡CAMBIO CLAVE: Usamos la versión JS!
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'data', 'imp.db');
-if (!fs.existsSync(path.join(__dirname, 'data'))) fs.mkdirSync(path.join(__dirname, 'data'));
+const dbDir = path.join(__dirname, 'data');
+const dbPath = path.join(dbDir, 'imp.db');
 
-const db = new sqlite3.Database(dbPath);
-
-async function run() {
-  const saltRounds = 10;
-  db.serialize(async () => {
-    db.run(`PRAGMA foreign_keys = ON;`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('LIDER','COLIDER','VETERANO','MIEMBRO')),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      username TEXT,
-      role TEXT,
-      text TEXT,
-      ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
-    );`);
-
-    // Pre-popular usuarios (si no existen)
-    const defaults = [
-      { user: 'Keko.imp', pass: 'Gta2045', role: 'LIDER' },
-      { user: 'Aye_Russu', pass: 'hiro2025', role: 'MIEMBRO' },
-      { user: 'Atlas', pass: '293749292', role: 'VETERANO' },
-      { user: 'Naim', pass: 'tilin123', role: 'COLIDER' },
-      { user: 'Oliver-imp', pass: '12831283', role: 'LIDER' },
-      { user: 'Zoe', pass: 'psico2025', role: 'VETERANO' },
-      { user: 'Mili', pass: 'miliCasa', role: 'MIEMBRO' },
-      { user: 'Ayelen', pass: 'ayel2025', role: 'COLIDER' },
-      { user: 'Ruben', pass: 'ruben321', role: 'MIEMBRO' },
-      { user: 'CEO', pass: 'aiss', role: 'VETERANO' }
-    ];
-
-    for (const u of defaults) {
-      const hash = await bcrypt.hash(u.pass, saltRounds);
-      db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)`, [u.user, hash, u.role]);
-    }
-
-    console.log('Base de datos inicializada en', dbPath);
-    db.close();
-  });
+// Asegurar que el directorio 'data' exista
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir);
 }
 
-run().catch(err => { console.error(err); db.close(); });
+const db = new sqlite3.Database(dbPath, async (err) => {
+    if (err) {
+        console.error('❌ Error al abrir la base de datos:', err.message);
+        return;
+    }
+    console.log(`✅ Base de datos abierta: ${dbPath}`);
+
+    // Crear la tabla de usuarios
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL
+    )`);
+
+    // Crear la tabla de mensajes
+    db.run(`CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        username TEXT NOT NULL,
+        role TEXT NOT NULL,
+        text TEXT NOT NULL,
+        ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )`);
+
+    // =========================================================
+    // 🛡️ Insertar Usuarios Iniciales con Hash Seguro (bcryptjs)
+    // =========================================================
+    try {
+        const passwordHash = await bcrypt.hash('Gta2045', 10); // Hash de la contraseña 'Gta2045'
+        
+        const usersToInsert = [
+            // Usuarios (username, password, role)
+            ['Keko.imp', passwordHash, 'LIDER'],
+            ['Veterano', passwordHash, 'VETERANO'],
+            ['Miembro01', passwordHash, 'MIEMBRO']
+        ];
+
+        db.serialize(() => {
+            const stmt = db.prepare("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)");
+            usersToInsert.forEach(user => {
+                stmt.run(user);
+            });
+            stmt.finalize();
+        });
+
+        console.log('✅ Usuarios iniciales y tablas creadas/verificadas.');
+
+    } catch (error) {
+        console.error('❌ Error al hashear contraseñas o insertar usuarios:', error);
+    } finally {
+        // Cerrar la conexión después de la inicialización
+        db.close((closeErr) => {
+            if (closeErr) {
+                console.error('Error al cerrar DB:', closeErr.message);
+            }
+            console.log('Base de datos cerrada.');
+        });
+    }
+});
